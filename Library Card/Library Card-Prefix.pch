@@ -8,7 +8,17 @@
 #warning "This project uses features only available in iOS SDK 5.0 and later."
 #endif
 
+#if DEBUG_FLAG
+#define DEBUG(fmt, ...) NSLog(fmt, ## __VA_ARGS__)
+#else
+#define DEBUG(fmt, ...)
+#endif
+
+#define Alert(title, msg, button, buttons...) {UIAlertView *__alert = [[UIAlertView alloc] initWithTitle:title message:msg delegate:self cancelButtonTitle:button otherButtonTitles:buttons];[__alert show];}
+
+
 #ifdef __OBJC__
     #import <UIKit/UIKit.h>
     #import <Foundation/Foundation.h>
+    #import <CoreData/CoreData.h>
 #endif

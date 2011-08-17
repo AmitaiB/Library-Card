@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model name="" userDefinedModelVersionIdentifier="" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="858" systemVersion="11A511" minimumToolsVersion="Automatic" macOSVersion="Automatic" iOSVersion="Automatic">
+    <entity name="Book" representedClassName="Book">
+        <attribute name="authors" optional="YES" attributeType="String"/>
+        <attribute name="dateRead" optional="YES" attributeType="Date"/>
+        <attribute name="isbn" optional="YES" attributeType="String"/>
+        <attribute name="isbn13" optional="YES" attributeType="String"/>
+        <attribute name="issued" optional="YES" attributeType="Date"/>
+        <attribute name="placeOfPublication" optional="YES" attributeType="String"/>
+        <attribute name="publisher" optional="YES" attributeType="String"/>
+        <attribute name="status" optional="YES" attributeType="Integer 16" defaultValueString="0"/>
+        <attribute name="title" optional="YES" attributeType="String"/>
+        <relationship name="shelves" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Shelf" inverseName="books" inverseEntity="Shelf"/>
+    </entity>
+    <entity name="Shelf" representedClassName="Shelf">
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <relationship name="books" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Book" inverseName="shelves" inverseEntity="Book"/>
+    </entity>
+    <elements>
+        <element name="Book" positionX="160" positionY="192" width="128" height="195"/>
+        <element name="Shelf" positionX="160" positionY="192" width="128" height="75"/>
+    </elements>
+</model>
