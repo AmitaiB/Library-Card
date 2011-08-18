@@ -19,6 +19,9 @@
 
 @property (nonatomic, retain) IBOutlet id delegate;
 @property (nonatomic, retain) IBOutlet ZBarReaderView * readerView;
-@property (nonatomic, retain) ZBarCameraSimulator * cameraSim;
+
+@property (nonatomic, retain) id result;
+
+- (void)lookupISBN:(NSString *)isbn;
 
 @end

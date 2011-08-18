@@ -2,24 +2,30 @@
 //  Book.m
 //  Library Card
 //
-//  Created by Will Barton on 8/13/11.
+//  Created by Will Barton on 8/17/11.
 //  Copyright (c) 2011 __MyCompanyName__. All rights reserved.
 //
 
 #import "Book.h"
-
+#import "Shelf.h"
 
 @implementation Book
 
-@dynamic title;
 @dynamic authors;
+@dynamic dateRead;
 @dynamic isbn;
 @dynamic isbn13;
-@dynamic publisher;
-@dynamic issued;
+@dynamic publishedDate;
 @dynamic placeOfPublication;
+@dynamic publisher;
 @dynamic status;
-@dynamic dateRead;
+@dynamic title;
+@dynamic pages;
+@dynamic categories;
+@dynamic rating;
+@dynamic thumbnailUrl;
+@dynamic language;
+@dynamic googleId;
 @dynamic shelves;
 
 - (void)save {
@@ -42,5 +48,5 @@
     DEBUG(@"Item saved.");
 }
 
-
 @end
+

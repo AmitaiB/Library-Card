@@ -22,3 +22,11 @@
     #import <Foundation/Foundation.h>
     #import <CoreData/CoreData.h>
 #endif
+
+extern NSString * const GoogleAPIKey;
+
+typedef enum {
+    kGoogleBooks
+} LCBookSource;
+
+NSString * pathToCoverForISBN(NSString * isbn);

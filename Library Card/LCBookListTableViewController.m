@@ -220,7 +220,6 @@
     return cell;
 }
 
-/*
 // Override to support conditional editing of the table view.
 - (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
     // Return NO if you do not want the specified item to be editable.
@@ -231,14 +230,24 @@
 - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
 {
     if (editingStyle == UITableViewCellEditingStyleDelete) {
-        // Delete the row from the data source
-        [tableView deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationFade];
+        // Delete the managed object for the given index path
+        NSManagedObjectContext *context = [self.fetchedResultsController managedObjectContext];
+        [context deleteObject:[self.fetchedResultsController objectAtIndexPath:indexPath]];
+        
+        // Save the context.
+        NSError *error;
+        if (![context save:&error]) {
+            // Update to handle the error appropriately.
+            Alert(nil, @"Error deleting item.", @"OK", nil);
+            return;
+        }
+
+        // [tableView deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationFade];
     }   
     else if (editingStyle == UITableViewCellEditingStyleInsert) {
         // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
     }   
 }
-*/
 
 #pragma mark - Table view delegate
 

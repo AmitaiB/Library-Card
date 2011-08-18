@@ -10,6 +10,18 @@
 #import "ZBarSDK.h"
 #import "Book.h"
 
+NSString * const GoogleAPIKey = @"AIzaSyDUhHq98cL-S1rNOGdSjiPXMbdoWMXhjXk";
+NSString * const BookSourceGoogle = @"BookSourceGoogle";
+
+NSString * pathToCoverForISBN(NSString * isbn) {
+    NSString * documentsPath = [[((LCAppDelegate *)[UIApplication sharedApplication].delegate)applicationDocumentsDirectory] path];
+    NSString * filename = [NSString stringWithFormat:@"%@.jpg", isbn];
+    NSString * pathString = [NSString pathWithComponents:
+                             [NSArray arrayWithObjects:documentsPath, @"covers", filename, nil]];
+    return pathString;
+}
+
+
 @implementation LCAppDelegate
 
 @synthesize window = _window;
@@ -34,6 +46,18 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     [ZBarReaderView class];
+    
+    // Make the covers folder exist
+    
+    NSString * documentsPath = [[((LCAppDelegate *)[UIApplication sharedApplication].delegate)applicationDocumentsDirectory] path];
+    NSString * coversPath = [NSString pathWithComponents:
+                             [NSArray arrayWithObjects:documentsPath, @"covers", nil]];
+    if (![[NSFileManager defaultManager] fileExistsAtPath:coversPath isDirectory:YES]) {
+        [[NSFileManager defaultManager] createDirectoryAtPath:coversPath 
+                                  withIntermediateDirectories:YES 
+                                                   attributes:nil 
+                                                        error:nil];
+    }
 
     NSURL * storeURL = [[self applicationDocumentsDirectory] URLByAppendingPathComponent:@"LibraryCard.sqlite"];
     if (![[NSFileManager defaultManager] fileExistsAtPath:storeURL.path]) {
@@ -50,7 +74,7 @@
         components.day = 5;
         components.month = 4;
         components.year = 2011;
-        catch22.issued = [[[NSCalendar alloc] initWithCalendarIdentifier:NSGregorianCalendar] dateFromComponents:components];
+        catch22.publishedDate = [[[NSCalendar alloc] initWithCalendarIdentifier:NSGregorianCalendar] dateFromComponents:components];
                       
         Book * karamazov = [NSEntityDescription insertNewObjectForEntityForName:@"Book" 
                                                        inManagedObjectContext:self.managedObjectContext];
@@ -65,7 +89,7 @@
         components.day = 14;
         components.month = 6;
         components.year = 2002;
-        karamazov.issued = [[[NSCalendar alloc] initWithCalendarIdentifier:NSGregorianCalendar] dateFromComponents:components];
+        karamazov.publishedDate = [[[NSCalendar alloc] initWithCalendarIdentifier:NSGregorianCalendar] dateFromComponents:components];
 
     }
     

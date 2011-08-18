@@ -2,13 +2,19 @@
 <model name="" userDefinedModelVersionIdentifier="" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="858" systemVersion="11A511" minimumToolsVersion="Automatic" macOSVersion="Automatic" iOSVersion="Automatic">
     <entity name="Book" representedClassName="Book">
         <attribute name="authors" optional="YES" attributeType="String"/>
+        <attribute name="categories" optional="YES" attributeType="String"/>
         <attribute name="dateRead" optional="YES" attributeType="Date"/>
+        <attribute name="googleId" optional="YES" attributeType="String"/>
         <attribute name="isbn" optional="YES" attributeType="String"/>
         <attribute name="isbn13" optional="YES" attributeType="String"/>
-        <attribute name="issued" optional="YES" attributeType="Date"/>
+        <attribute name="language" optional="YES" attributeType="String"/>
+        <attribute name="pages" optional="YES" attributeType="Integer 16" defaultValueString="0"/>
         <attribute name="placeOfPublication" optional="YES" attributeType="String"/>
+        <attribute name="publishedDate" optional="YES" attributeType="Date"/>
         <attribute name="publisher" optional="YES" attributeType="String"/>
+        <attribute name="rating" optional="YES" attributeType="Integer 16" defaultValueString="0"/>
         <attribute name="status" optional="YES" attributeType="Integer 16" defaultValueString="0"/>
+        <attribute name="thumbnailUrl" optional="YES" attributeType="String"/>
         <attribute name="title" optional="YES" attributeType="String"/>
         <relationship name="shelves" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Shelf" inverseName="books" inverseEntity="Shelf"/>
     </entity>
@@ -17,7 +23,7 @@
         <relationship name="books" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Book" inverseName="shelves" inverseEntity="Book"/>
     </entity>
     <elements>
-        <element name="Book" positionX="160" positionY="192" width="128" height="195"/>
+        <element name="Book" positionX="160" positionY="192" width="128" height="300"/>
         <element name="Shelf" positionX="160" positionY="192" width="128" height="75"/>
     </elements>
 </model>
