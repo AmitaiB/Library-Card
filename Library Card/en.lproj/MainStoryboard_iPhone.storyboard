@@ -44,7 +44,7 @@
                     </connections>
                 </viewController>
             </objects>
-            <point key="canvasLocation" x="2742" y="180"/>
+            <point key="canvasLocation" x="2786" y="180"/>
         </scene>
         <scene sceneID="dyI-1h-gcP">
             <objects>
@@ -160,6 +160,11 @@
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     </view>
                     <toolbarItems>
+                        <barButtonItem title="Tweet" id="OFq-Bp-zhy">
+                            <connections>
+                                <action selector="tweet:" destination="D0V-MW-NjH" id="OKW-of-aCl"/>
+                            </connections>
+                        </barButtonItem>
                         <barButtonItem style="plain" systemItem="flexibleSpace" id="5pT-nY-VVV"/>
                         <barButtonItem title="?" id="5xT-Ly-k65"/>
                     </toolbarItems>
@@ -187,12 +192,14 @@
                         <outlet property="cameraButton" destination="Ofi-p3-M0Z" id="WAn-JQ-snP"/>
                         <outlet property="coverImageView" destination="5d1-oh-xrV" id="fPN-QF-6HA"/>
                         <outlet property="dateField" destination="Bv3-45-cnl" id="83v-UV-qOQ"/>
+                        <outlet property="helpButton" destination="5xT-Ly-k65" id="bdw-RR-McK"/>
                         <outlet property="isbn13Field" destination="feq-3Y-rhi" id="ohU-d3-B1V"/>
                         <outlet property="pagesField" destination="IYX-ej-4Gs" id="S8I-2M-wZ5"/>
                         <outlet property="publisherField" destination="gHV-ZB-T9F" id="KzK-Vg-0yf"/>
                         <outlet property="ratingView" destination="vlY-PD-Lcu" id="vzZ-CQ-5Fu"/>
                         <outlet property="statusControl" destination="Lkq-Mz-gPC" id="Jg6-U6-Glu"/>
                         <outlet property="titleField" destination="mHH-gk-IRp" id="Wzi-wu-tr4"/>
+                        <outlet property="tweetButton" destination="OFq-Bp-zhy" id="3uo-jO-ilW"/>
                     </connections>
                 </viewController>
             </objects>
@@ -226,8 +233,8 @@
                         <rect key="frame" x="0.0" y="64" width="320" height="372"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" cocoaTouchSystemColor="scrollViewTexturedBackgroundColor"/>
-                        <searchBar key="tableHeaderView" contentMode="redraw" showsScopeBar="YES" id="281">
-                            <rect key="frame" x="0.0" y="0.0" width="320" height="88"/>
+                        <searchBar key="tableHeaderView" contentMode="redraw" placeholder="Search All Books" id="281">
+                            <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                             <textInputTraits key="textInputTraits"/>
                             <scopeButtonTitles>
@@ -240,7 +247,7 @@
                         </searchBar>
                         <prototypes>
                             <tableViewCell contentMode="scaleToFill" selectionStyle="blue" accessoryType="disclosureIndicator" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="BookListCell" id="203" customClass="LCBookCell">
-                                <rect key="frame" x="0.0" y="110" width="320" height="44"/>
+                                <rect key="frame" x="0.0" y="66" width="320" height="44"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
                                     <rect key="frame" x="0.0" y="0.0" width="300" height="43"/>
@@ -321,6 +328,57 @@
             <point key="canvasLocation" x="1709" y="180"/>
         </scene>
     </scenes>
+    <classes>
+        <class className="LCBarcodeScannerViewController" superclassName="UIViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/LCBarcodeScannerViewController.h"/>
+            <relationships>
+                <relationship kind="outlet" name="delegate"/>
+                <relationship kind="outlet" name="readerView" candidateClass="ZBarReaderView"/>
+            </relationships>
+        </class>
+        <class className="LCBookCell" superclassName="UITableViewCell">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/LCBookCell.h"/>
+            <relationships>
+                <relationship kind="outlet" name="authorLabel" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="titleLabel" candidateClass="UILabel"/>
+            </relationships>
+        </class>
+        <class className="LCBookListTableViewController" superclassName="UITableViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/LCBookListTableViewController.h"/>
+            <relationships>
+                <relationship kind="outlet" name="statusBarButtonItem" candidateClass="UIBarButtonItem"/>
+                <relationship kind="outlet" name="statusControl" candidateClass="UISegmentedControl"/>
+            </relationships>
+        </class>
+        <class className="LCBookViewController" superclassName="UIViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/LCBookViewController.h"/>
+            <relationships>
+                <relationship kind="action" name="statusControlChanged:"/>
+                <relationship kind="action" name="tweet:"/>
+                <relationship kind="outlet" name="authorField" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="cameraButton" candidateClass="UIBarButtonItem"/>
+                <relationship kind="outlet" name="coverImageView" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="dateField" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="helpButton" candidateClass="UIBarButtonItem"/>
+                <relationship kind="outlet" name="isbn13Field" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="pagesField" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="publisherField" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="ratingView" candidateClass="LCRatingView"/>
+                <relationship kind="outlet" name="statusControl" candidateClass="UISegmentedControl"/>
+                <relationship kind="outlet" name="titleField" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="tweetButton" candidateClass="UIBarButtonItem"/>
+            </relationships>
+        </class>
+        <class className="LCRatingView" superclassName="UIView">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/LCRatingView.h"/>
+            <relationships>
+                <relationship kind="outlet" name="delegate"/>
+            </relationships>
+        </class>
+        <class className="ZBarReaderView" superclassName="UIView">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ZBarReaderView.h"/>
+        </class>
+    </classes>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">
         <simulatedStatusBarMetrics key="statusBar"/>
         <simulatedOrientationMetrics key="orientation"/>

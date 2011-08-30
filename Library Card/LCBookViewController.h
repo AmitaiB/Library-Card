@@ -16,6 +16,8 @@
 @property (nonatomic, retain) Book * book;
 
 @property (nonatomic, retain) IBOutlet UIBarButtonItem * cameraButton;
+@property (nonatomic, retain) IBOutlet UIBarButtonItem * helpButton;
+@property (nonatomic, retain) IBOutlet UIBarButtonItem * tweetButton;
 
 @property (nonatomic, retain) IBOutlet UIImageView * coverImageView;
 @property (nonatomic, retain) IBOutlet UITextField * titleField;
@@ -29,5 +31,6 @@
 @property (nonatomic, retain) IBOutlet LCRatingView * ratingView;
 
 - (IBAction)statusControlChanged:(id)sender;
+- (IBAction)tweet:(id)sender;
 
 @end

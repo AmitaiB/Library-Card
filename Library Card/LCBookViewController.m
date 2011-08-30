@@ -11,6 +11,8 @@
 #import "LCBookLookup.h"
 #import "LCAppDelegate.h"
 
+#import <Twitter/Twitter.h>
+
 @interface LCBookViewController () <UITextFieldDelegate, LCBarcodeScannerDelegate, LCBookLookupDelegate, LCRatingViewDelegate>
 - (void)endEditing;
 - (void)updateFromModel;
@@ -22,6 +24,8 @@
 @synthesize book = _book;
 
 @synthesize cameraButton = _cameraButton;
+@synthesize helpButton = _helpButton;
+@synthesize tweetButton = _tweetButton;
 
 @synthesize coverImageView = _coverImageView;
 @synthesize titleField = _titleField;
@@ -86,6 +90,10 @@
     [super viewWillAppear:animated];
     [self.navigationController setToolbarHidden:NO animated:YES];
     
+    self.tweetButton.enabled = NO;
+    if ([TWTweetComposeViewController canSendTweet])
+        self.tweetButton.enabled = YES;
+
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -150,6 +158,7 @@
 - (IBAction)statusControlChanged:(id)sender {
     self.book.status = [NSNumber numberWithInteger:self.statusControl.selectedSegmentIndex];
     [self.book save];
+        
 }
 
 #pragma mark - Barcode Delegate
@@ -239,6 +248,36 @@
 - (void)ratingView:(LCRatingView *)rateView ratingDidChange:(float)rating {
     self.book.rating = [NSNumber numberWithFloat:rating];
     [self.book save];
+}
+
+#pragma mark - Social Media
+
+- (IBAction)tweet:(id)sender {
+    
+    NSString * tweetText;
+    if ([self.book.status integerValue] == kReadStatus)
+        tweetText = [NSString stringWithFormat:@"I just finished %@, by %@.", self.book.title, self.book.authors];
+    else if ([self.book.status integerValue] == kReadingStatus)
+        tweetText = [NSString stringWithFormat:@"I am currently reading %@, by %@.", self.book.title, self.book.authors];
+    else 
+        tweetText = [NSString stringWithFormat:@"I am going to read %@, by %@.", self.book.title, self.book.authors];
+    
+
+    TWTweetComposeViewController *twitter = [[TWTweetComposeViewController alloc] init];
+    [twitter setInitialText:tweetText];
+    
+    [self presentViewController:twitter animated:YES completion:nil];
+    twitter.completionHandler = ^(TWTweetComposeViewControllerResult res) {
+        if(res == TWTweetComposeViewControllerResultDone) {
+            NSLog(@"Tweet was tweeted");
+        } else if(res == TWTweetComposeViewControllerResultCancelled) {
+            NSLog(@"Tweet was NOT tweeted");
+        }
+        
+        [self dismissModalViewControllerAnimated:YES];
+    };
+
+    
 }
 
 #pragma mark - Keyboard Notifications

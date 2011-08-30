@@ -21,6 +21,9 @@
     #import <UIKit/UIKit.h>
     #import <Foundation/Foundation.h>
     #import <CoreData/CoreData.h>
+    #import <QuartzCore/QuartzCore.h>
+    #import <Twitter/Twitter.h>
+
 #endif
 
 extern NSString * const GoogleAPIKey;

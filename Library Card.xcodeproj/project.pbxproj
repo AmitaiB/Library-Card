@@ -66,6 +66,7 @@
 		BE4CEE9513FFDC540033F370 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = BE4CEE9413FFDC540033F370 /* Settings.bundle */; };
 		BE4CEE9913FFDFAF0033F370 /* LCBookViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BE4CEE9813FFDFAF0033F370 /* LCBookViewController.m */; };
 		BE5D970013FCA036001FB9CE /* LCBookLookup.m in Sources */ = {isa = PBXBuildFile; fileRef = BE5D96FF13FCA036001FB9CE /* LCBookLookup.m */; };
+		BE5F0DA0140D681C008ED637 /* Twitter.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BE5F0D9F140D681C008ED637 /* Twitter.framework */; };
 		BE876C0713F6874C006C7ECD /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BE876C0613F6874C006C7ECD /* UIKit.framework */; };
 		BE876C0913F6874C006C7ECD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BE876C0813F6874C006C7ECD /* Foundation.framework */; };
 		BE876C0F13F6874C006C7ECD /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = BE876C0D13F6874C006C7ECD /* InfoPlist.strings */; };
@@ -238,6 +239,7 @@
 		BE5D96FE13FCA036001FB9CE /* LCBookLookup.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LCBookLookup.h; sourceTree = "<group>"; };
 		BE5D96FF13FCA036001FB9CE /* LCBookLookup.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LCBookLookup.m; sourceTree = "<group>"; };
 		BE5F0D9C140D145C008ED637 /* Changelog.rtf */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.rtf; path = Changelog.rtf; sourceTree = "<group>"; };
+		BE5F0D9F140D681C008ED637 /* Twitter.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Twitter.framework; path = System/Library/Frameworks/Twitter.framework; sourceTree = SDKROOT; };
 		BE876C0213F6874C006C7ECD /* Library Card.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Library Card.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BE876C0613F6874C006C7ECD /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		BE876C0813F6874C006C7ECD /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -286,6 +288,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BE5F0DA0140D681C008ED637 /* Twitter.framework in Frameworks */,
 				BE27FCDF13FC42FF009279C1 /* libz.dylib in Frameworks */,
 				BE27FCDD13FC42F1009279C1 /* MobileCoreServices.framework in Frameworks */,
 				BE27FCDB13FC42DC009279C1 /* SystemConfiguration.framework in Frameworks */,
@@ -583,6 +586,7 @@
 		BE876C0513F6874C006C7ECD /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				BE5F0D9F140D681C008ED637 /* Twitter.framework */,
 				BE27FCD813FC4278009279C1 /* libxml2.dylib */,
 				BE27FCDE13FC42FF009279C1 /* libz.dylib */,
 				BE27FCDC13FC42F1009279C1 /* MobileCoreServices.framework */,

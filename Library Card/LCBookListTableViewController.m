@@ -340,9 +340,11 @@
 - (void)filterContentForSearchText:(NSString*)searchText scope:(NSString*)scope {
 
     NSPredicate * filterPredicate;
-    if ([scope isEqualToString:@"Author"])
+    NSLog(@"Scope: %@, searchText: %@", scope, searchText);
+    if ([scope isEqualToString:@"Author"]) {
         filterPredicate = [NSPredicate predicateWithFormat:@"authors contains[cd] %@", searchText];
-    else
+        NSLog(@"authors contains[cd] %@", searchText);
+    } else
         filterPredicate = [NSPredicate predicateWithFormat:@"title beginswith[cd] %@", searchText];
     
     // Update the fetched results by changing the fetch request predicate
@@ -358,7 +360,9 @@
 }
 
 - (BOOL)searchDisplayController:(UISearchDisplayController *)controller shouldReloadTableForSearchString:(NSString *)searchString {
-    [self filterContentForSearchText:[self.searchDisplayController.searchBar text] scope:nil];
+    [self filterContentForSearchText:[self.searchDisplayController.searchBar text] 
+                               scope:[controller.searchBar.scopeButtonTitles 
+                                      objectAtIndex:controller.searchBar.selectedScopeButtonIndex]];
     
     return YES;
 }
