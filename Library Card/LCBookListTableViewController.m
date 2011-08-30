@@ -57,7 +57,9 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [self.statusBarButtonItem setCustomView:self.statusControl];   
+    [self.statusBarButtonItem setCustomView:self.statusControl]; 
+    
+    self.statusControl.selectedSegmentIndex = [[NSUserDefaults standardUserDefaults] integerForKey:@"BookListTabSelection"];
 }
 
 - (void)viewDidUnload {
@@ -101,7 +103,13 @@
 }
 
 - (IBAction)statusControlChanged:(id)sender {
-
+    
+    // Store the selected index in the defaults
+    [[NSUserDefaults standardUserDefaults] setInteger:self.statusControl.selectedSegmentIndex
+                                             forKey:@"BookListTabSelection"];
+    
+    
+    // Update the fetched results by changing the fetch request predicate
     [NSFetchedResultsController deleteCacheWithName:self.cacheName];
 
     self.fetchedResultsController.fetchRequest.predicate = self.predicate;
