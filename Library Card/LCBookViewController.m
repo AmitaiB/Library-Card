@@ -131,6 +131,11 @@
     
     NSLog(@"Cover Path: %@", pathToCoverForISBN(self.book.isbn13));
     self.coverImageView.image = [UIImage imageNamed:pathToCoverForISBN(self.book.isbn13)];
+    self.coverImageView.layer.shadowColor = [UIColor purpleColor].CGColor;
+    self.coverImageView.layer.shadowOffset = CGSizeMake(0, 1);
+    self.coverImageView.layer.shadowOpacity = 1;
+    self.coverImageView.layer.shadowRadius = 1.0;
+
     
     self.statusControl.selectedSegmentIndex = [self.book.status integerValue];
     self.ratingView.rating = [self.book.rating floatValue];

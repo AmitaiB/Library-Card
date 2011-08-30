@@ -31,6 +31,9 @@
 @synthesize statusBarButtonItem = _statusBarButtonItem;
 
 @synthesize cacheName = _cacheName;
+
+@synthesize searching = _searching;
+
 @dynamic predicate;
 
 - (id)initWithStyle:(UITableViewStyle)style {
@@ -162,10 +165,11 @@
     // Set the predicate
     fetchRequest.predicate = self.predicate;
     
-    NSFetchedResultsController * aFetchedResultsController = [[NSFetchedResultsController alloc] initWithFetchRequest:fetchRequest 
-                                                                                                 managedObjectContext:managedObjectContext 
-                                                                                                   sectionNameKeyPath:nil 
-                                                                                                            cacheName:self.cacheName];
+    NSFetchedResultsController * aFetchedResultsController = 
+        [[NSFetchedResultsController alloc] initWithFetchRequest:fetchRequest 
+                                            managedObjectContext:managedObjectContext 
+                                              sectionNameKeyPath:nil 
+                                                       cacheName:self.cacheName];
     aFetchedResultsController.delegate = self;
     self.fetchedResultsController = aFetchedResultsController;
     
@@ -226,10 +230,21 @@
     }
 }
 
+- (void)controllerWillChangeContent:(NSFetchedResultsController *)controller {
+    if (self.searching)
+        [self.searchDisplayController.searchResultsTableView beginUpdates];
+
+}
+
 - (void)controllerDidChangeContent:(NSFetchedResultsController *)controller {
+    
+    if (self.searching)
+        [self.searchDisplayController.searchResultsTableView endUpdates];
+    
     // The fetch controller has sent all current change notifications, so tell the table view to process all updates.
     [self.tableView endUpdates];
 }
+
 
 #pragma mark - Table view data source
 
@@ -255,14 +270,26 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     static NSString * CellIdentifier = @"BookListCell";
     
-    LCBookCell * cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-    if (cell == nil) {
-        cell = (LCBookCell *)[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
+    UITableViewCell * cell;
+    
+    if (tableView == self.searchDisplayController.searchResultsTableView) {
+        cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+        if (cell == nil) {
+            cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier];
+        }
+        
+        Book * book = [self.fetchedResultsController objectAtIndexPath:indexPath];
+        cell.textLabel.text = book.title;
+        cell.detailTextLabel.text = book.authors;
     }
-    
-    [self updateCell:cell atIndexPath:indexPath];
-    // Fill in book info
-    
+    else {
+        cell = (LCBookCell *)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+        if (cell == nil) {
+            cell = (LCBookCell *)[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
+        }
+        [self updateCell:cell atIndexPath:indexPath];
+    }
+
     return cell;
 }
 
@@ -307,5 +334,59 @@
      [self.navigationController pushViewController:detailViewController animated:YES];
 }
 */
+
+#pragma mark - Search Display Controller
+
+- (void)filterContentForSearchText:(NSString*)searchText scope:(NSString*)scope {
+
+    NSPredicate * filterPredicate;
+    if ([scope isEqualToString:@"Author"])
+        filterPredicate = [NSPredicate predicateWithFormat:@"authors contains[cd] %@", searchText];
+    else
+        filterPredicate = [NSPredicate predicateWithFormat:@"title beginswith[cd] %@", searchText];
+    
+    // Update the fetched results by changing the fetch request predicate
+    [NSFetchedResultsController deleteCacheWithName:self.cacheName];
+    
+    self.fetchedResultsController.fetchRequest.predicate = filterPredicate;
+    
+    NSError * error = nil;
+    if (![self.fetchedResultsController performFetch:&error]) {   
+        NSLog(@"Unresolved error %@, %@", error, [error userInfo]);
+        Alert(nil, @"There was an error fetching items", @"OK", nil);
+    }
+}
+
+- (BOOL)searchDisplayController:(UISearchDisplayController *)controller shouldReloadTableForSearchString:(NSString *)searchString {
+    [self filterContentForSearchText:[self.searchDisplayController.searchBar text] scope:nil];
+    
+    return YES;
+}
+
+- (BOOL)searchDisplayController:(UISearchDisplayController *)controller shouldReloadTableForSearchScope:(NSInteger)searchOption {
+    return YES;
+}
+
+- (void)searchDisplayControllerWillBeginSearch:(UISearchDisplayController *)controller {
+    self.searching = YES;
+}
+
+- (void)searchDisplayControllerDidEndSearch:(UISearchDisplayController *)controller  {
+    
+    [NSFetchedResultsController deleteCacheWithName:self.cacheName];
+    
+    self.fetchedResultsController.fetchRequest.predicate = self.predicate;
+    
+    NSError *error = nil;
+    if (![self.fetchedResultsController performFetch:&error]) {   
+        NSLog(@"Unresolved error %@, %@", error, [error userInfo]);
+        Alert(nil, @"There was an error fetching items", @"OK", nil);
+    }
+    
+    // [self.tableView reloadData];
+    
+    self.searching = NO;
+}
+
 
 @end

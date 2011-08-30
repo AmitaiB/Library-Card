@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model name="" userDefinedModelVersionIdentifier="" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="864" systemVersion="11A511" minimumToolsVersion="Automatic" macOSVersion="Automatic" iOSVersion="Automatic">
+<model name="" userDefinedModelVersionIdentifier="" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="864" systemVersion="11B26" minimumToolsVersion="Automatic" macOSVersion="Automatic" iOSVersion="Automatic">
     <entity name="Book" representedClassName="Book">
         <attribute name="authors" optional="YES" attributeType="String"/>
         <attribute name="categories" optional="YES" attributeType="String"/>
@@ -13,7 +13,7 @@
         <attribute name="publishedDate" optional="YES" attributeType="Date"/>
         <attribute name="publisher" optional="YES" attributeType="String"/>
         <attribute name="rating" optional="YES" attributeType="Float"/>
-        <attribute name="status" attributeType="Integer 16" defaultValueString="3"/>
+        <attribute name="status" attributeType="Integer 16" defaultValueString="1"/>
         <attribute name="thumbnailUrl" optional="YES" attributeType="String"/>
         <attribute name="title" optional="YES" attributeType="String"/>
         <relationship name="shelves" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Shelf" inverseName="books" inverseEntity="Shelf"/>

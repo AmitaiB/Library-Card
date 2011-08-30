@@ -77,7 +77,8 @@ NSString * pathToCoverForISBN(NSString * isbn) {
         components.month = 4;
         components.year = 2011;
         catch22.publishedDate = [[[NSCalendar alloc] initWithCalendarIdentifier:NSGregorianCalendar] dateFromComponents:components];
-                      
+        [catch22 save];              
+        
         Book * karamazov = [NSEntityDescription insertNewObjectForEntityForName:@"Book" 
                                                        inManagedObjectContext:self.managedObjectContext];
         karamazov.title = @"The Brothers Karamazov";
@@ -92,6 +93,7 @@ NSString * pathToCoverForISBN(NSString * isbn) {
         components.month = 6;
         components.year = 2002;
         karamazov.publishedDate = [[[NSCalendar alloc] initWithCalendarIdentifier:NSGregorianCalendar] dateFromComponents:components];
+        [karamazov save];
 
     }
     
