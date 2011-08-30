@@ -12,6 +12,7 @@
 #import "LCAppDelegate.h"
 
 @interface LCBookViewController () <UITextFieldDelegate, LCBarcodeScannerDelegate, LCBookLookupDelegate, LCRatingViewDelegate>
+- (void)endEditing;
 - (void)updateFromModel;
 @end
 
@@ -19,6 +20,9 @@
 @implementation LCBookViewController
 
 @synthesize book = _book;
+
+@synthesize cameraButton = _cameraButton;
+
 @synthesize coverImageView = _coverImageView;
 @synthesize titleField = _titleField;
 @synthesize authorField = _authorField; 
@@ -26,6 +30,8 @@
 @synthesize dateField;
 @synthesize isbn13Field = _isbn13Field;
 @synthesize pagesField = _pagesField;
+
+@synthesize statusControl = _statusControl;
 @synthesize ratingView = _ratingView;
 
 - (void)didReceiveMemoryWarning
@@ -42,13 +48,21 @@
 {
     [super viewDidLoad];
         
+    [[NSNotificationCenter defaultCenter] addObserver:self 
+                                             selector:@selector(keyboardWillShow:) 
+                                                 name:UIKeyboardWillShowNotification 
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self 
+                                             selector:@selector(keyboardWillHide:) 
+                                                 name:UIKeyboardWillHideNotification 
+                                               object:nil];
+
     self.view.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"card.png"]];
 
     // Set up the rating view
     self.ratingView.defaultImage = [UIImage imageNamed:@"star_blank.png"];
     self.ratingView.selectedImage = [UIImage imageNamed:@"star.png"];
     self.ratingView.halfSelectedImage = [UIImage imageNamed:@"star_half.png"];
-    
     
     if (self.book == nil) {
         // If we haven't gotten a book, we need to get one. Pop up the barcode scanner.
@@ -60,6 +74,10 @@
 
 - (void)viewDidUnload {
     [super viewDidUnload];
+    
+    [[NSNotificationCenter defaultCenter] removeObserver:self forKeyPath:UIKeyboardWillShowNotification];
+    [[NSNotificationCenter defaultCenter] removeObserver:self forKeyPath:UIKeyboardWillHideNotification];
+    
     // Release any retained subviews of the main view.
     // e.g. self.myOutlet = nil;
 }
@@ -114,11 +132,19 @@
     NSLog(@"Cover Path: %@", pathToCoverForISBN(self.book.isbn13));
     self.coverImageView.image = [UIImage imageNamed:pathToCoverForISBN(self.book.isbn13)];
     
+    self.statusControl.selectedSegmentIndex = [self.book.status integerValue];
     self.ratingView.rating = [self.book.rating floatValue];
     
     self.title = self.book.title;
     // self.navigationItem.title = self.book.title;
         
+}
+
+#pragma mark - Status Control
+
+- (IBAction)statusControlChanged:(id)sender {
+    self.book.status = [NSNumber numberWithInteger:self.statusControl.selectedSegmentIndex];
+    [self.book save];
 }
 
 #pragma mark - Barcode Delegate
@@ -173,6 +199,7 @@
 
 #pragma mark - UITextField Delegate
 
+
 - (BOOL)textFieldShouldReturn:(UITextField*)aTextField {
     NSLog(@"Did Should Return");
     
@@ -182,7 +209,7 @@
 
 - (void)textFieldDidEndEditing:(UITextField *)aTextField {
     NSLog(@"Did End Editing");
-    
+        
     if (aTextField == self.titleField) {
         self.book.title = self.titleField.text;
         [self.book save];
@@ -207,6 +234,26 @@
 - (void)ratingView:(LCRatingView *)rateView ratingDidChange:(float)rating {
     self.book.rating = [NSNumber numberWithFloat:rating];
     [self.book save];
+}
+
+#pragma mark - Keyboard Notifications
+
+- (void)endEditing {
+    [self.view.window endEditing:YES];
+}
+
+- (void)keyboardWillShow:(NSNotification *)notification {
+    // Show a done button in the navbar for keyboards that don't include done buttons (numeric).
+    self.navigationItem.rightBarButtonItem = 
+    [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone 
+                                                  target:self 
+                                                  action:@selector(endEditing)];
+
+}
+
+- (void)keyboardWillHide:(NSNotification *)notification {
+    // Remove the done button.
+    self.navigationItem.rightBarButtonItem = self.cameraButton;
 }
 
 @end

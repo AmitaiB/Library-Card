@@ -15,6 +15,8 @@
 
 @property (nonatomic, retain) Book * book;
 
+@property (nonatomic, retain) IBOutlet UIBarButtonItem * cameraButton;
+
 @property (nonatomic, retain) IBOutlet UIImageView * coverImageView;
 @property (nonatomic, retain) IBOutlet UITextField * titleField;
 @property (nonatomic, retain) IBOutlet UITextField * authorField;
@@ -23,6 +25,9 @@
 @property (nonatomic, retain) IBOutlet UITextField * isbn13Field;
 @property (nonatomic, retain) IBOutlet UITextField * pagesField;
 
+@property (nonatomic, retain) IBOutlet UISegmentedControl * statusControl;
 @property (nonatomic, retain) IBOutlet LCRatingView * ratingView;
+
+- (IBAction)statusControlChanged:(id)sender;
 
 @end
