@@ -9,6 +9,13 @@
 #import <Foundation/Foundation.h>
 #import <CoreData/CoreData.h>
 
+
+typedef enum {
+    kReadingStatus,
+    kReadStatus,
+    kToReadStatus
+} LCBookStatus;
+
 @class Shelf;
 
 @interface Book : NSManagedObject

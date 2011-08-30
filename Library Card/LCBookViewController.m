@@ -1,22 +1,22 @@
 //
-//  LCBookTableViewController.m
+//  LCBookViewController.m
 //  Library Card
 //
-//  Created by Will Barton on 8/13/11.
+//  Created by Will Barton on 8/20/11.
 //  Copyright (c) 2011 __MyCompanyName__. All rights reserved.
 //
 
-#import "LCBookTableViewController.h"
+#import "LCBookViewController.h"
 #import "LCBarcodeScannerViewController.h"
 #import "LCBookLookup.h"
 #import "LCAppDelegate.h"
 
-@interface LCBookTableViewController () <UITextFieldDelegate, LCBarcodeScannerDelegate, LCBookLookupDelegate>
+@interface LCBookViewController () <UITextFieldDelegate, LCBarcodeScannerDelegate, LCBookLookupDelegate, LCRatingViewDelegate>
 - (void)updateFromModel;
 @end
 
 
-@implementation LCBookTableViewController
+@implementation LCBookViewController
 
 @synthesize book = _book;
 @synthesize coverImageView = _coverImageView;
@@ -24,16 +24,9 @@
 @synthesize authorField = _authorField; 
 @synthesize publisherField = _publisherField;
 @synthesize dateField;
-@synthesize locationField = _locationField;
-
-- (id)initWithStyle:(UITableViewStyle)style
-{
-    self = [super initWithStyle:style];
-    if (self) {
-        // Custom initialization
-    }
-    return self;
-}
+@synthesize isbn13Field = _isbn13Field;
+@synthesize pagesField = _pagesField;
+@synthesize ratingView = _ratingView;
 
 - (void)didReceiveMemoryWarning
 {
@@ -48,9 +41,15 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+        
+    self.view.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"card.png"]];
 
-    self.tableView.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"card.png"]];
-
+    // Set up the rating view
+    self.ratingView.defaultImage = [UIImage imageNamed:@"star_blank.png"];
+    self.ratingView.selectedImage = [UIImage imageNamed:@"star.png"];
+    self.ratingView.halfSelectedImage = [UIImage imageNamed:@"star_half.png"];
+    
+    
     if (self.book == nil) {
         // If we haven't gotten a book, we need to get one. Pop up the barcode scanner.
         [self performSegueWithIdentifier:@"scanBarcode" sender:self];
@@ -59,8 +58,7 @@
     [self updateFromModel];
 }
 
-- (void)viewDidUnload
-{
+- (void)viewDidUnload {
     [super viewDidUnload];
     // Release any retained subviews of the main view.
     // e.g. self.myOutlet = nil;
@@ -68,35 +66,33 @@
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
+    [self.navigationController setToolbarHidden:NO animated:YES];
     
 }
 
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
+
 }
 
 - (void)viewWillDisappear:(BOOL)animated {
     NSLog( @"In viewWillDisappear" );
-
+    
     [super viewWillDisappear:animated];
     [self.view.window endEditing:YES];
-    
-//    if (self.book.title == nil || [self.book.title isEqualToString:@""]) {
-//        [self.book.managedObjectContext rollback];
-//    }
+    [self.navigationController setToolbarHidden:NO animated:YES];
+
+    //    if (self.book.title == nil || [self.book.title isEqualToString:@""]) {
+    //        [self.book.managedObjectContext rollback];
+    //    }
     
 }
 
-- (void)viewDidDisappear:(BOOL)animated {
-    
-    [super viewDidDisappear:animated];
-}
-
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
     // Return YES for supported orientations
     return (interfaceOrientation == UIInterfaceOrientationPortrait);
 }
+
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
     if ([segue.identifier isEqualToString:@"scanBarcode"]) {
@@ -112,13 +108,17 @@
     self.titleField.text = self.book.title;
     self.authorField.text = self.book.authors;
     self.publisherField.text = self.book.publisher;
-    self.locationField.text = self.book.placeOfPublication;
+    self.pagesField.text = [self.book.pages stringValue];
+    self.isbn13Field.text = self.book.isbn13;
+    
+    NSLog(@"Cover Path: %@", pathToCoverForISBN(self.book.isbn13));
+    self.coverImageView.image = [UIImage imageNamed:pathToCoverForISBN(self.book.isbn13)];
+    
+    self.ratingView.rating = [self.book.rating floatValue];
     
     self.title = self.book.title;
     // self.navigationItem.title = self.book.title;
-    
-    [self.tableView reloadData];
-
+        
 }
 
 #pragma mark - Barcode Delegate
@@ -133,7 +133,7 @@
             self.book = [NSEntityDescription insertNewObjectForEntityForName:@"Book" 
                                                       inManagedObjectContext:managedObjectContext];
         }
-
+        
         NSDictionary * bookInfo = barcodeScannerViewController.result;
         
         // Set Book attributes
@@ -148,7 +148,7 @@
         self.book.isbn = [bookInfo objectForKey:@"isbn"];
         self.book.isbn13 = [bookInfo objectForKey:@"isbn13"];
         self.book.publishedDate = [bookInfo objectForKey:@"publishedDate"];
-
+        
         // XXX: Set up some kind of progress indicator image
         LCBookLookup * bookLookup = [[LCBookLookup alloc] init];
         bookLookup.delegate = self;
@@ -175,7 +175,7 @@
 
 - (BOOL)textFieldShouldReturn:(UITextField*)aTextField {
     NSLog(@"Did Should Return");
-
+    
     [aTextField resignFirstResponder];
     return YES;
 }
@@ -192,12 +192,21 @@
     } else if (aTextField == self.publisherField) {
         self.book.publisher = self.publisherField.text;
         [self.book save];
-    } else if (aTextField == self.locationField) {
-        self.book.placeOfPublication = self.locationField.text;
+    } else if (aTextField == self.isbn13Field) {
+        self.book.isbn13 = self.isbn13Field.text;
+        [self.book save];
+    } else if (aTextField == self.pagesField) {
+        self.book.pages = [NSNumber numberWithInt:[self.pagesField.text intValue]];
         [self.book save];
     } 
-
+    
 }
 
+#pragma mark - Rating View Delegate
+
+- (void)ratingView:(LCRatingView *)rateView ratingDidChange:(float)rating {
+    self.book.rating = [NSNumber numberWithFloat:rating];
+    [self.book save];
+}
 
 @end

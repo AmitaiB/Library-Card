@@ -8,7 +8,7 @@
 
 #import "LCAppDelegate.h"
 #import "LCBookListTableViewController.h"
-#import "LCBookTableViewController.h"
+#import "LCBookViewController.h"
 #import "LCBookCell.h"
 
 @interface LCBookListTableViewController () <NSFetchedResultsControllerDelegate>
@@ -18,6 +18,7 @@
 @interface LCBookListTableViewController (private)
 
 - (void)updateCell:(UITableViewCell *)cell atIndexPath:(NSIndexPath *)indexPath;
+- (IBAction)statusControlChanged:(id)sender;
 
 @end
 
@@ -26,9 +27,11 @@
 
 @synthesize fetchedResultsController = _fetchedResultsController;
 
-@synthesize predicate = _predicate;
-@synthesize cacheName = _cacheName;
+@synthesize statusControl = _statusControl;
+@synthesize statusBarButtonItem = _statusBarButtonItem;
 
+@synthesize cacheName = _cacheName;
+@dynamic predicate;
 
 - (id)initWithStyle:(UITableViewStyle)style {
     self = [super initWithStyle:style];
@@ -49,10 +52,12 @@
 
 #pragma mark - View lifecycle
 
+- (void)setToolbarItems:(NSArray *)toolbarItems animated:(BOOL)animated {
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
-
- 
+    [self.statusBarButtonItem setCustomView:self.statusControl];   
 }
 
 - (void)viewDidUnload {
@@ -60,6 +65,8 @@
 }
 
 - (void)viewWillAppear:(BOOL)animated {
+    [self.navigationController setToolbarHidden:NO animated:YES];
+
     [super viewWillAppear:animated];
 }
 
@@ -68,10 +75,13 @@
 }
 
 - (void)viewWillDisappear:(BOOL)animated {
+    [self.navigationController setToolbarHidden:YES animated:YES];
+
     [super viewWillDisappear:animated];
 }
 
 - (void)viewDidDisappear:(BOOL)animated {
+
     [super viewDidDisappear:animated];
 }
 
@@ -80,19 +90,46 @@
     return (interfaceOrientation == UIInterfaceOrientationPortrait);
 }
 
+- (NSPredicate *)predicate {
+    NSPredicate * aPredicate;
+    
+    // "All" is status 3.
+    if (self.statusControl.selectedSegmentIndex != 3)
+        aPredicate = [NSPredicate predicateWithFormat:@"status == %d", self.statusControl.selectedSegmentIndex];
+    
+    return aPredicate;
+}
+
+- (IBAction)statusControlChanged:(id)sender {
+
+    [NSFetchedResultsController deleteCacheWithName:self.cacheName];
+
+    self.fetchedResultsController.fetchRequest.predicate = self.predicate;
+    
+    NSError *error = nil;
+    if (![self.fetchedResultsController performFetch:&error]) {   
+        NSLog(@"Unresolved error %@, %@", error, [error userInfo]);
+        Alert(nil, @"There was an error fetching items", @"OK", nil);
+    }
+    
+    [self.tableView reloadData];
+}
+
 #pragma mark - Segue
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
     if ([segue.identifier isEqualToString:@"addBook"]) {
+        /*
         NSManagedObjectContext * managedObjectContext = ((LCAppDelegate *)[UIApplication sharedApplication].delegate).managedObjectContext;
 
         LCBookTableViewController * detailViewController = [segue destinationViewController];
         detailViewController.book = [NSEntityDescription insertNewObjectForEntityForName:@"Book" 
                                                        inManagedObjectContext:managedObjectContext];
+         */
 
     }
     if ([segue.identifier isEqualToString:@"showBook"]) {
-        LCBookTableViewController * detailViewController = [segue destinationViewController];
+        LCBookViewController * detailViewController = [segue destinationViewController];
         detailViewController.book = [self.fetchedResultsController objectAtIndexPath:[self.tableView indexPathForSelectedRow]];
     }
 }
@@ -127,7 +164,8 @@
     NSError * error = nil;
     if (![self.fetchedResultsController performFetch:&error]) {
         NSLog(@"Unresolved error: %@, %@", error, error.userInfo);
-        abort();
+        Alert(nil, @"There was an error fetching items", @"OK", nil);
+        return nil;
     }
 
     return _fetchedResultsController;

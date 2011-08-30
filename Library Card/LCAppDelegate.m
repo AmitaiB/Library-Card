@@ -52,7 +52,9 @@ NSString * pathToCoverForISBN(NSString * isbn) {
     NSString * documentsPath = [[((LCAppDelegate *)[UIApplication sharedApplication].delegate)applicationDocumentsDirectory] path];
     NSString * coversPath = [NSString pathWithComponents:
                              [NSArray arrayWithObjects:documentsPath, @"covers", nil]];
-    if (![[NSFileManager defaultManager] fileExistsAtPath:coversPath isDirectory:YES]) {
+
+    BOOL isDir = NO;
+    if ([[NSFileManager defaultManager] fileExistsAtPath:coversPath isDirectory:&isDir] && !isDir) {
         [[NSFileManager defaultManager] createDirectoryAtPath:coversPath 
                                   withIntermediateDirectories:YES 
                                                    attributes:nil 

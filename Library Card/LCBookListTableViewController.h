@@ -14,6 +14,8 @@
 
 @interface LCBookListTableViewController : UITableViewController
 
+@property (nonatomic, retain) IBOutlet UISegmentedControl * statusControl;
+@property (nonatomic, retain) IBOutlet UIBarButtonItem * statusBarButtonItem;
 @property (nonatomic, retain) NSPredicate * predicate;
 @property (nonatomic, retain) NSString * cacheName;
 
