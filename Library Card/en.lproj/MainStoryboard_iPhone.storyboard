@@ -216,7 +216,7 @@
                     </connections>
                 </viewController>
             </objects>
-            <point key="canvasLocation" x="2248" y="180"/>
+            <point key="canvasLocation" x="2214" y="-397"/>
         </scene>
         <scene sceneID="210">
             <objects>
@@ -348,11 +348,25 @@
                         <rect key="frame" x="0.0" y="64" width="320" height="372"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
+                        <view key="tableHeaderView" opaque="NO" contentMode="scaleToFill" id="ikR-y7-Moj" customClass="LCCoverView">
+                            <rect key="frame" x="0.0" y="0.0" width="320" height="160"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <subviews>
+                                <imageView contentMode="scaleAspectFit" id="HyZ-t0-Stw">
+                                    <rect key="frame" x="112" y="20" width="96" height="120"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                </imageView>
+                            </subviews>
+                            <color key="backgroundColor" white="1" alpha="0.0" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                            <connections>
+                                <outlet property="imageView" destination="HyZ-t0-Stw" id="HHW-ea-l1F"/>
+                            </connections>
+                        </view>
                         <sections>
                             <tableViewSection id="iOj-d0-voa">
                                 <cells>
                                     <tableViewCell contentMode="scaleToFill" selectionStyle="none" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="AuthorCell" id="C2l-dV-AYr">
-                                        <rect key="frame" x="0.0" y="20" width="320" height="45"/>
+                                        <rect key="frame" x="0.0" y="170" width="320" height="45"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
                                             <rect key="frame" x="10" y="1" width="300" height="43"/>
@@ -377,7 +391,7 @@
                             <tableViewSection id="4QF-aT-ncy">
                                 <cells>
                                     <tableViewCell contentMode="scaleToFill" selectionStyle="none" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="ISBN13Cell" id="y1V-eJ-Zkf">
-                                        <rect key="frame" x="0.0" y="85" width="320" height="45"/>
+                                        <rect key="frame" x="0.0" y="235" width="320" height="45"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
                                             <rect key="frame" x="10" y="1" width="300" height="43"/>
@@ -405,7 +419,7 @@
                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                     </tableViewCell>
                                     <tableViewCell contentMode="scaleToFill" selectionStyle="none" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="PublisherCell" id="QwG-bn-chI">
-                                        <rect key="frame" x="0.0" y="130" width="320" height="44"/>
+                                        <rect key="frame" x="0.0" y="280" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
                                             <rect key="frame" x="10" y="1" width="300" height="43"/>
@@ -433,7 +447,7 @@
                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                     </tableViewCell>
                                     <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="DateCell" id="JJg-GB-3wW">
-                                        <rect key="frame" x="0.0" y="174" width="320" height="44"/>
+                                        <rect key="frame" x="0.0" y="324" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
                                             <rect key="frame" x="10" y="1" width="300" height="43"/>
@@ -459,7 +473,7 @@
                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                     </tableViewCell>
                                     <tableViewCell contentMode="scaleToFill" selectionStyle="none" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="PagesCell" id="WjA-zt-pUv">
-                                        <rect key="frame" x="0.0" y="218" width="320" height="44"/>
+                                        <rect key="frame" x="0.0" y="368" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
                                             <rect key="frame" x="10" y="1" width="300" height="43"/>
@@ -491,7 +505,7 @@
                             <tableViewSection id="VB4-ae-vLz">
                                 <cells>
                                     <tableViewCell contentMode="scaleToFill" selectionStyle="none" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="StatusCell" id="J6l-0z-dap">
-                                        <rect key="frame" x="0.0" y="282" width="320" height="45"/>
+                                        <rect key="frame" x="0.0" y="432" width="320" height="45"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
                                             <rect key="frame" x="10" y="1" width="300" height="43"/>
@@ -516,7 +530,7 @@
                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                     </tableViewCell>
                                     <tableViewCell contentMode="scaleToFill" selectionStyle="none" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="RatingCell" id="dXy-ko-cVe">
-                                        <rect key="frame" x="0.0" y="327" width="320" height="44"/>
+                                        <rect key="frame" x="0.0" y="477" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
                                             <rect key="frame" x="10" y="1" width="300" height="43"/>
@@ -574,6 +588,7 @@
                     <connections>
                         <outlet property="authorField" destination="OML-J4-U1S" id="pZ6-BR-r8b"/>
                         <outlet property="cameraButton" destination="Uxz-gX-Xqv" id="ENq-GO-HPb"/>
+                        <outlet property="coverView" destination="ikR-y7-Moj" id="NrN-Xg-Ygg"/>
                         <outlet property="helpButton" destination="T6O-KO-IoO" id="cbq-r0-lnj"/>
                         <outlet property="isbn13Field" destination="yR8-Kc-9cR" id="NJh-U6-XZd"/>
                         <outlet property="publisherField" destination="CTU-LW-5QG" id="KLZ-6o-QE9"/>
@@ -583,7 +598,7 @@
                     </connections>
                 </tableViewController>
             </objects>
-            <point key="canvasLocation" x="2248" y="757"/>
+            <point key="canvasLocation" x="2214" y="180"/>
         </scene>
     </scenes>
     <classes>
@@ -615,7 +630,7 @@
                 <relationship kind="action" name="tweet:"/>
                 <relationship kind="outlet" name="authorField" candidateClass="UITextField"/>
                 <relationship kind="outlet" name="cameraButton" candidateClass="UIBarButtonItem"/>
-                <relationship kind="outlet" name="coverImageView" candidateClass="UIImageView"/>
+                <relationship kind="outlet" name="coverView" candidateClass="LCCoverView"/>
                 <relationship kind="outlet" name="dateField" candidateClass="UITextField"/>
                 <relationship kind="outlet" name="helpButton" candidateClass="UIBarButtonItem"/>
                 <relationship kind="outlet" name="isbn13Field" candidateClass="UITextField"/>
@@ -646,6 +661,12 @@
                 <relationship kind="outlet" name="textView" candidateClass="UITextView"/>
                 <relationship kind="outlet" name="titleField" candidateClass="UITextField"/>
                 <relationship kind="outlet" name="tweetButton" candidateClass="UIBarButtonItem"/>
+            </relationships>
+        </class>
+        <class className="LCCoverView" superclassName="UIView">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/LCCoverView.h"/>
+            <relationships>
+                <relationship kind="outlet" name="imageView" candidateClass="UIImageView"/>
             </relationships>
         </class>
         <class className="LCRatingView" superclassName="UIView">

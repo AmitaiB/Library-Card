@@ -14,7 +14,7 @@
 @interface LCBookTableViewController () <UITextFieldDelegate, LCBarcodeScannerDelegate, LCBookLookupDelegate, LCRatingViewDelegate>
 - (void)updateFromModel;
 - (void)endEditing;
-
+- (void)downloadCover;
 @end
 
 
@@ -26,7 +26,8 @@
 @synthesize helpButton = _helpButton;
 @synthesize tweetButton = _tweetButton;
 
-@synthesize coverImageView = _coverImageView;
+@synthesize coverView = _coverView;
+
 @synthesize titleField = _titleField;
 @synthesize authorField = _authorField; 
 @synthesize publisherField = _publisherField;
@@ -138,12 +139,13 @@
     self.pagesField.text = [self.book.pages stringValue];
     self.isbn13Field.text = self.book.isbn13;
     
-    NSLog(@"Cover Path: %@", pathToCoverForISBN(self.book.isbn13));
-    self.coverImageView.image = [UIImage imageNamed:pathToCoverForISBN(self.book.isbn13)];
-    self.coverImageView.layer.shadowColor = [UIColor purpleColor].CGColor;
-    self.coverImageView.layer.shadowOffset = CGSizeMake(0, 1);
-    self.coverImageView.layer.shadowOpacity = 1;
-    self.coverImageView.layer.shadowRadius = 1.0;
+    NSString * coverPath = pathToCoverForISBN(self.book.isbn13);
+    NSLog(@"Cover Path: %@", coverPath);
+    self.coverView.image = [UIImage imageWithContentsOfFile:coverPath];
+    self.coverView.imageView.layer.shadowColor = [UIColor blackColor].CGColor;
+    self.coverView.imageView.layer.shadowOffset = CGSizeMake(1, 1);
+    self.coverView.imageView.layer.shadowOpacity = 0.5;
+    self.coverView.imageView.layer.shadowRadius = 5.0;
     
     self.statusControl.selectedSegmentIndex = [self.book.status integerValue];
     self.ratingView.rating = [self.book.rating floatValue];
@@ -194,12 +196,8 @@
         self.book.isbn13 = [bookInfo objectForKey:@"isbn13"];
         self.book.publishedDate = [bookInfo objectForKey:@"publishedDate"];
         
-        // XXX: Set up some kind of progress indicator image
-        LCBookLookup * bookLookup = [[LCBookLookup alloc] init];
-        bookLookup.delegate = self;
-        [bookLookup downloadCoverImage:self.book.thumbnailUrl forISBN:self.book.isbn13];
-        
         [self.book save];
+        [self downloadCover];
         [self updateFromModel];
     }
     
@@ -208,13 +206,22 @@
 
 #pragma mark - Book Lookup Delegate
 
+- (void)downloadCover {
+    // XXX: Set up some kind of progress indicator image
+    LCBookLookup * bookLookup = [[LCBookLookup alloc] init];
+    bookLookup.delegate = self;
+        
+    [bookLookup downloadCoverImage:self.book.thumbnailUrl forISBN:self.book.isbn13];
+}
+
 - (void)bookLookupFailedWithError:(NSError *)error {
     
 }
 
 - (void)bookLookupDownloadedCover {
-    
+
 }
+
 
 #pragma mark - UITextField Delegate
 

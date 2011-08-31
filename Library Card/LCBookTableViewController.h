@@ -10,6 +10,7 @@
 #import "LCBarcodeScannerViewController.h"
 #import "Book.h"
 #import "LCRatingView.h"
+#import "LCCoverView.h"
 
 @interface LCBookTableViewController : UITableViewController <LCBarcodeScannerDelegate, UITextViewDelegate>
 
@@ -19,7 +20,8 @@
 @property (nonatomic, retain) IBOutlet UIBarButtonItem * helpButton;
 @property (nonatomic, retain) IBOutlet UIBarButtonItem * tweetButton;
 
-@property (nonatomic, retain) IBOutlet UIImageView * coverImageView;
+@property (nonatomic, retain) IBOutlet LCCoverView * coverView;
+
 @property (nonatomic, retain) IBOutlet UITextField * titleField;
 @property (nonatomic, retain) IBOutlet UITextField * authorField;
 @property (nonatomic, retain) IBOutlet UITextField * publisherField;

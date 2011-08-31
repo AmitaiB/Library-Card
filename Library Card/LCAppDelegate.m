@@ -48,19 +48,18 @@ NSString * pathToCoverForISBN(NSString * isbn) {
     [ZBarReaderView class];
     
     // Make the covers folder exist
-    
     NSString * documentsPath = [[((LCAppDelegate *)[UIApplication sharedApplication].delegate)applicationDocumentsDirectory] path];
     NSString * coversPath = [NSString pathWithComponents:
                              [NSArray arrayWithObjects:documentsPath, @"covers", nil]];
 
-    BOOL isDir = NO;
-    if ([[NSFileManager defaultManager] fileExistsAtPath:coversPath isDirectory:&isDir] && !isDir) {
+    if (![[NSFileManager defaultManager] fileExistsAtPath:coversPath]) {
         [[NSFileManager defaultManager] createDirectoryAtPath:coversPath 
                                   withIntermediateDirectories:YES 
                                                    attributes:nil 
                                                         error:nil];
     }
 
+    // XXX: Fill in some content
     NSURL * storeURL = [[self applicationDocumentsDirectory] URLByAppendingPathComponent:@"LibraryCard.sqlite"];
     if (![[NSFileManager defaultManager] fileExistsAtPath:storeURL.path]) {
         Book * catch22 = [NSEntityDescription insertNewObjectForEntityForName:@"Book" 
