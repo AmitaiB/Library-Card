@@ -37,6 +37,7 @@
 
 @synthesize statusControl = _statusControl;
 @synthesize ratingView = _ratingView;
+@synthesize textView = _textView;
 
 - (void)didReceiveMemoryWarning
 {
@@ -93,7 +94,7 @@
     self.tweetButton.enabled = NO;
     if ([TWTweetComposeViewController canSendTweet])
         self.tweetButton.enabled = YES;
-
+        
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -144,11 +145,15 @@
     self.coverImageView.layer.shadowOpacity = 1;
     self.coverImageView.layer.shadowRadius = 1.0;
 
-    
     self.statusControl.selectedSegmentIndex = [self.book.status integerValue];
     self.ratingView.rating = [self.book.rating floatValue];
     
     self.title = self.book.title;
+    
+    self.ratingView.hidden = YES;
+    if ([self.book.status integerValue] == kReadStatus)
+        self.ratingView.hidden = NO;
+
     // self.navigationItem.title = self.book.title;
         
 }
@@ -158,7 +163,7 @@
 - (IBAction)statusControlChanged:(id)sender {
     self.book.status = [NSNumber numberWithInteger:self.statusControl.selectedSegmentIndex];
     [self.book save];
-        
+    [self updateFromModel];
 }
 
 #pragma mark - Barcode Delegate

@@ -12,8 +12,8 @@
 
 typedef enum {
     kReadingStatus,
+    kToReadStatus,
     kReadStatus,
-    kToReadStatus
 } LCBookStatus;
 
 @class Shelf;

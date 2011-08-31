@@ -61,7 +61,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self.statusBarButtonItem setCustomView:self.statusControl]; 
-    
+        
     self.statusControl.selectedSegmentIndex = [[NSUserDefaults standardUserDefaults] integerForKey:@"BookListTabSelection"];
 }
 

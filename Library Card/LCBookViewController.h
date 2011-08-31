@@ -11,7 +11,7 @@
 #import "Book.h"
 #import "LCRatingView.h"
 
-@interface LCBookViewController : UIViewController <LCBarcodeScannerDelegate>
+@interface LCBookViewController : UIViewController <LCBarcodeScannerDelegate, UITextViewDelegate>
 
 @property (nonatomic, retain) Book * book;
 
@@ -29,6 +29,7 @@
 
 @property (nonatomic, retain) IBOutlet UISegmentedControl * statusControl;
 @property (nonatomic, retain) IBOutlet LCRatingView * ratingView;
+@property (nonatomic, retain) IBOutlet UITextView * textView;
 
 - (IBAction)statusControlChanged:(id)sender;
 - (IBAction)tweet:(id)sender;
