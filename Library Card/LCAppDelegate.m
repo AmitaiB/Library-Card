@@ -14,8 +14,11 @@ NSString * const GoogleAPIKey = @"AIzaSyDUhHq98cL-S1rNOGdSjiPXMbdoWMXhjXk";
 NSString * const BookSourceGoogle = @"BookSourceGoogle";
 
 NSString * pathToCoverForISBN(NSString * isbn) {
+    NSString * strippedISBN = [[isbn componentsSeparatedByCharactersInSet:
+                                [[NSCharacterSet decimalDigitCharacterSet] invertedSet]] 
+                               componentsJoinedByString:@""];
     NSString * documentsPath = [[((LCAppDelegate *)[UIApplication sharedApplication].delegate)applicationDocumentsDirectory] path];
-    NSString * filename = [NSString stringWithFormat:@"%@.jpg", isbn];
+    NSString * filename = [NSString stringWithFormat:@"%@.jpg", strippedISBN];
     NSString * pathString = [NSString pathWithComponents:
                              [NSArray arrayWithObjects:documentsPath, @"covers", filename, nil]];
     return pathString;

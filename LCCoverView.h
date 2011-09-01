@@ -7,11 +7,17 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "LCBookLookup.h"
+#import "Book.h"
 
-@interface LCCoverView : UIView
+@interface LCCoverView : UIView <LCBookLookupDelegate>
 
 @property (nonatomic, retain) UIImage * image;
-
+@property (nonatomic, retain) Book * book;
 @property (nonatomic, retain) IBOutlet UIImageView * imageView;
+@property (nonatomic, retain) IBOutlet UIActivityIndicatorView * activityIndicatorView;
+
+- (void)update;
+- (void)downloadCover;
 
 @end

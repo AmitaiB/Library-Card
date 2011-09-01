@@ -8,6 +8,12 @@
 
 #import <Foundation/Foundation.h>
 
+extern NSString * const LCBookLookupErrorDomain;
+typedef enum {
+    kBookNotFound
+} LCBookLookupError;
+
+
 @class LCBookLookup;
 
 @protocol LCBookLookupDelegate

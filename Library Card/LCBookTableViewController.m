@@ -11,10 +11,9 @@
 #import "LCBookLookup.h"
 #import "LCAppDelegate.h"
 
-@interface LCBookTableViewController () <UITextFieldDelegate, LCBarcodeScannerDelegate, LCBookLookupDelegate, LCRatingViewDelegate>
+@interface LCBookTableViewController () <UITextFieldDelegate, LCBarcodeScannerDelegate, LCRatingViewDelegate>
 - (void)updateFromModel;
 - (void)endEditing;
-- (void)downloadCover;
 @end
 
 
@@ -138,7 +137,10 @@
     self.publisherField.text = self.book.publisher;
     self.pagesField.text = [self.book.pages stringValue];
     self.isbn13Field.text = self.book.isbn13;
-    
+        
+    self.coverView.book = self.book;
+    [self.coverView update];
+    /*
     NSString * coverPath = pathToCoverForISBN(self.book.isbn13);
     NSLog(@"Cover Path: %@", coverPath);
     self.coverView.image = [UIImage imageWithContentsOfFile:coverPath];
@@ -146,6 +148,7 @@
     self.coverView.imageView.layer.shadowOffset = CGSizeMake(1, 1);
     self.coverView.imageView.layer.shadowOpacity = 0.5;
     self.coverView.imageView.layer.shadowRadius = 5.0;
+    */
     
     self.statusControl.selectedSegmentIndex = [self.book.status integerValue];
     self.ratingView.rating = [self.book.rating floatValue];
@@ -197,31 +200,12 @@
         self.book.publishedDate = [bookInfo objectForKey:@"publishedDate"];
         
         [self.book save];
-        [self downloadCover];
+        [self.coverView downloadCover];
         [self updateFromModel];
     }
     
     [self dismissModalViewControllerAnimated:YES];
 }
-
-#pragma mark - Book Lookup Delegate
-
-- (void)downloadCover {
-    // XXX: Set up some kind of progress indicator image
-    LCBookLookup * bookLookup = [[LCBookLookup alloc] init];
-    bookLookup.delegate = self;
-        
-    [bookLookup downloadCoverImage:self.book.thumbnailUrl forISBN:self.book.isbn13];
-}
-
-- (void)bookLookupFailedWithError:(NSError *)error {
-    
-}
-
-- (void)bookLookupDownloadedCover {
-
-}
-
 
 #pragma mark - UITextField Delegate
 

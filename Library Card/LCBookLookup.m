@@ -11,6 +11,8 @@
 #import "ASIHTTPRequest.h"
 #import "LCAppDelegate.h"
 
+NSString * const LCBookLookupErrorDomain = @"LCBookLookupErrorDomain";
+
 @interface LCBookLookup (Private)
 - (void)googleBooksWithQuery:(NSString *)queryString;
 - (NSDictionary *)parseGoogleBooksQuery:(id)result;
@@ -48,26 +50,43 @@
                             GoogleAPIKey, queryString];
     NSURL * url = [NSURL URLWithString:urlString];
     
+    NSLog(@"Fetching URL %@", url);
+    
     __block ASIHTTPRequest * request = [ASIHTTPRequest requestWithURL:url];
     
     [request setCompletionBlock:^{
-        // Use when fetching text data
-        NSLog(@"Response String: %@", request.responseString);
-        
+        // Parse the resulting JSON
         SBJsonParser * parser = [[SBJsonParser alloc] init];
-        
         id result = [parser objectWithString:request.responseString];
-        
-        if (result) {
-            NSLog(@"Got JSON: %@", result);
-            
-        } else {
+        if (!result) {
             NSLog(@"A JSON error occurred: %@", parser.error);
             [self.delegate bookLookupFailedWithError:parser.error];
             return;
         }
         
+        NSInteger totalItems = [((NSString *)[((NSDictionary *)result) objectForKey:@"totalItems"]) integerValue];
+        if (totalItems == 0) {
+            NSLog(@"Total items is 0. Book was not found.");
+            NSError * error = [NSError errorWithDomain:LCBookLookupErrorDomain 
+                                                  code:kBookNotFound 
+                                              userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
+                                                        @"Book not found", NSLocalizedDescriptionKey, nil]];
+            [self.delegate bookLookupFailedWithError:error];
+            return;
+        }
+        
         NSDictionary * bookInfo = [self parseGoogleBooksQuery:result];
+        
+        if (bookInfo == nil) {
+            NSLog(@"Book info was nil.");
+            NSError * error = [NSError errorWithDomain:LCBookLookupErrorDomain 
+                                                  code:kBookNotFound 
+                                              userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
+                                                        @"Book not found", NSLocalizedDescriptionKey, nil]];
+            [self.delegate bookLookupFailedWithError:error];
+            return;
+        }
+        
         [self.delegate bookLookupFoundBook:bookInfo];
     }];
     
@@ -84,12 +103,16 @@
 }
 
 - (NSDictionary *)parseGoogleBooksQuery:(id)result {
+        
     
     // Extract Google Books data
     NSDictionary * volumeDict = (NSDictionary *)[((NSArray *)[result objectForKey:@"items"]) objectAtIndex:0];
     NSDictionary * volumeInfo = (NSDictionary *)[volumeDict objectForKey:@"volumeInfo"];
     
     NSMutableDictionary * bookInfo = [NSMutableDictionary dictionary];
+    
+    
+    NSLog(@"Got Book Info: %@", volumeDict);
     
     // Set Book attributes
     [bookInfo setObject:[volumeDict objectForKey:@"id"] 
@@ -109,6 +132,11 @@
     [bookInfo setObject:[((NSArray *)[volumeInfo objectForKey:@"categories"]) componentsJoinedByString:@", "]
                  forKey:@"categories"];
     
+    // This is a hack to remove any possibility of curling in the thumbnail image.
+    NSString * thumbnailUrl = [bookInfo objectForKey:@"thumbnailUrl"];
+    [bookInfo setObject:[thumbnailUrl stringByReplacingOccurrencesOfString:@"edge=curl" withString:@""] 
+                 forKey:@"thumbnailUrl"]; 
+
     // Now the more complicated to extract attributes
     for (NSDictionary * isbnDict in (NSArray *)[volumeInfo objectForKey:@"industryIdentifiers"]) {
         if ([[isbnDict objectForKey:@"type"] isEqualToString:@"ISBN_10"])
@@ -126,25 +154,28 @@
 }
 
 - (void)downloadCoverImage:(NSString *)imageUrl forISBN:(NSString *)isbn {
-
+    
     ASIHTTPRequest * request = [ASIHTTPRequest requestWithURL:[NSURL URLWithString:imageUrl]];
     request.downloadDestinationPath = pathToCoverForISBN(isbn);
     
     [request setCompletionBlock:^{
-        NSLog(@"Downloaded image");
         [self.delegate bookLookupDownloadedCover];
     }];
     [request setFailedBlock:^{
         NSError *error = [request error];
-        NSLog(@"Error downloading image: %@", error);
+        [self.delegate bookLookupFailedWithError:error];
     }];
     [request startAsynchronous];
     
 }
 
 - (void)lookupISBN:(NSString *)isbn {
+    NSString * strippedISBN = [[isbn componentsSeparatedByCharactersInSet:
+                                [[NSCharacterSet decimalDigitCharacterSet] invertedSet]] 
+                               componentsJoinedByString:@""];
+
     if (self.bookSource == kGoogleBooks) {
-        NSString * queryString = [NSString stringWithFormat:@"isbn+%@",isbn];
+        NSString * queryString = [NSString stringWithFormat:@"isbn+%@", strippedISBN];
         [self googleBooksWithQuery:queryString];
     }
 }
