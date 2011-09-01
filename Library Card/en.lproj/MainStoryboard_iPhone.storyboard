@@ -618,6 +618,7 @@
             <source key="sourceIdentifier" type="project" relativePath="./Classes/LCBookCell.h"/>
             <relationships>
                 <relationship kind="outlet" name="authorLabel" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="iconView" candidateClass="UIImageView"/>
                 <relationship kind="outlet" name="titleLabel" candidateClass="UILabel"/>
             </relationships>
         </class>

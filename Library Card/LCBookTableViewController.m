@@ -96,6 +96,8 @@
     if ([TWTweetComposeViewController canSendTweet])
         self.tweetButton.enabled = YES;
 
+    self.coverView.book = self.book;
+
 }
 
 - (void)viewDidAppear:(BOOL)animated {

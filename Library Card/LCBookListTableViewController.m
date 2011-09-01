@@ -72,16 +72,21 @@
 - (void)viewWillAppear:(BOOL)animated {
     [self.navigationController setToolbarHidden:NO animated:YES];
 
+    
     [super viewWillAppear:animated];
 }
 
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
+    self.title = @"Library Card";
+
 }
 
 - (void)viewWillDisappear:(BOOL)animated {
     [self.navigationController setToolbarHidden:YES animated:YES];
 
+    self.navigationItem.backBarButtonItem.title = @"Back";
+    
     [super viewWillDisappear:animated];
 }
 
@@ -255,6 +260,12 @@
     
     cell.titleLabel.text = book.title;
     cell.authorLabel.text = book.authors;
+    
+    NSString * coverPath = pathToCoverForISBN(book.isbn13);
+    if ([[NSFileManager defaultManager] fileExistsAtPath:coverPath])
+        cell.imageView.image = [UIImage imageWithContentsOfFile:coverPath];
+    else
+        cell.imageView.image = [UIImage imageNamed:@"cover.png"];
     
 }
 
