@@ -64,6 +64,7 @@
     self.imageView.layer.shadowOffset = CGSizeMake(1, 1);
     self.imageView.layer.shadowOpacity = 0.5;
     self.imageView.layer.shadowRadius = 5.0;
+    
 }
 
 - (void)downloadCover {
@@ -85,6 +86,8 @@
     self.activityIndicatorView.hidden = NO;
     self.image = [UIImage imageNamed:@"blank_cover.png"];
 
+    NSLog(@"Thumbnail URL: %@", self.book.thumbnailUrl);
+    
     // If there is a thumbnail path already attached to the book, that's fine. Otherwise, find one, and return (this method will be called again once there is a successful lookup.
     if (self.book.thumbnailUrl == nil) {
         [bookLookup lookupISBN:self.book.isbn13];

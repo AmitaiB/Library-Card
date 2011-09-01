@@ -142,15 +142,6 @@
         
     self.coverView.book = self.book;
     [self.coverView update];
-    /*
-    NSString * coverPath = pathToCoverForISBN(self.book.isbn13);
-    NSLog(@"Cover Path: %@", coverPath);
-    self.coverView.image = [UIImage imageWithContentsOfFile:coverPath];
-    self.coverView.imageView.layer.shadowColor = [UIColor blackColor].CGColor;
-    self.coverView.imageView.layer.shadowOffset = CGSizeMake(1, 1);
-    self.coverView.imageView.layer.shadowOpacity = 0.5;
-    self.coverView.imageView.layer.shadowRadius = 5.0;
-    */
     
     self.statusControl.selectedSegmentIndex = [self.book.status integerValue];
     self.ratingView.rating = [self.book.rating floatValue];
@@ -169,6 +160,8 @@
 
 - (IBAction)statusControlChanged:(id)sender {
     self.book.status = [NSNumber numberWithInteger:self.statusControl.selectedSegmentIndex];
+    NSLog(@"New Status: %@", self.book.status);
+
     [self.book save];
     [self updateFromModel];
 }
@@ -176,6 +169,13 @@
 #pragma mark - Barcode Delegate
 
 - (void)barcodeScannerDidFinish:(LCBarcodeScannerViewController *)barcodeScannerViewController {
+    
+    if (barcodeScannerViewController.result == nil) {
+        // If the book is nil, pop us back to the books list
+        if (self.book == nil)
+            [self.navigationController popViewControllerAnimated:NO];
+        return;
+    }
     
     if (barcodeScannerViewController.result != nil) {
         
@@ -201,10 +201,17 @@
         self.book.isbn13 = [bookInfo objectForKey:@"isbn13"];
         self.book.publishedDate = [bookInfo objectForKey:@"publishedDate"];
         
+        NSLog(@"Saving Book: %@", self.book);
+        
         [self.book save];
-        [self.coverView downloadCover];
         [self updateFromModel];
+        [self.coverView downloadCover];
+        
+    } else if (self.book == nil) {
+        // If the book is nil, pop us back to the books list
+        [self.navigationController popViewControllerAnimated:NO];
     }
+
     
     [self dismissModalViewControllerAnimated:YES];
 }

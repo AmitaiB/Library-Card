@@ -26,6 +26,8 @@
 @dynamic thumbnailUrl;
 @dynamic language;
 @dynamic googleId;
+@dynamic isEbook;
+@dynamic bookmark;
 @dynamic shelves;
 
 - (void)save {

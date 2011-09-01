@@ -35,6 +35,8 @@ typedef enum {
 @property (nonatomic, retain) NSString * thumbnailUrl;
 @property (nonatomic, retain) NSString * language;
 @property (nonatomic, retain) NSString * googleId;
+@property (nonatomic, retain) NSNumber * bookmark;
+@property (nonatomic, retain) NSNumber * isEbook;
 @property (nonatomic, retain) NSSet *shelves;
 @end
 

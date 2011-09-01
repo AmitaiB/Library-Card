@@ -115,27 +115,49 @@ NSString * const LCBookLookupErrorDomain = @"LCBookLookupErrorDomain";
     NSLog(@"Got Book Info: %@", volumeDict);
     
     // Set Book attributes
-    [bookInfo setObject:[volumeDict objectForKey:@"id"] 
-                 forKey:@"googleId"];
-    [bookInfo setObject:[volumeInfo objectForKey:@"title"] 
-                 forKey:@"title"];
-    [bookInfo setObject:[((NSArray *)[volumeInfo objectForKey:@"authors"]) componentsJoinedByString:@", "] 
-                 forKey:@"authors"];
-    [bookInfo setObject:[volumeInfo objectForKey:@"publisher"]
-                 forKey:@"publisher"];
-    [bookInfo setObject:[NSNumber numberWithInt:[((NSString *)[volumeInfo objectForKey:@"pageCount"]) intValue]] 
-                 forKey:@"pages"];
-    [bookInfo setObject:[volumeInfo objectForKey:@"language"] 
-                 forKey:@"language"];
-    [bookInfo setObject:[((NSDictionary *)[volumeInfo objectForKey:@"imageLinks"]) objectForKey:@"thumbnail"] 
-                 forKey:@"thumbnailUrl"]; 
-    [bookInfo setObject:[((NSArray *)[volumeInfo objectForKey:@"categories"]) componentsJoinedByString:@", "]
-                 forKey:@"categories"];
+    NSString * googleId = [volumeDict objectForKey:@"id"];
+    if (googleId != nil)
+        [bookInfo setObject:googleId forKey:@"googleId"];
     
-    // This is a hack to remove any possibility of curling in the thumbnail image.
-    NSString * thumbnailUrl = [bookInfo objectForKey:@"thumbnailUrl"];
-    [bookInfo setObject:[thumbnailUrl stringByReplacingOccurrencesOfString:@"edge=curl" withString:@""] 
-                 forKey:@"thumbnailUrl"]; 
+    NSNumber * isEbook = [((NSDictionary *)[volumeDict objectForKey:@"saleInfo"]) objectForKey:@"isEbook"];
+    if (isEbook == nil)
+        [bookInfo setObject:isEbook forKey:@"isEbook"];
+    
+    NSString * title = [volumeInfo objectForKey:@"title"];
+    if (title != nil)
+        [bookInfo setObject:title forKey:@"title"];
+    
+    NSArray * authors = (NSArray *)[volumeInfo objectForKey:@"authors"];
+    if (authors != nil)
+        [bookInfo setObject:[authors componentsJoinedByString:@", "] forKey:@"authors"];
+    
+    NSString * publisher = [volumeInfo objectForKey:@"publisher"];
+    if (publisher != nil)
+        [bookInfo setObject:publisher forKey:@"publisher"];
+    
+    NSString * publishedDate = [volumeInfo objectForKey:@"publishedDate"];
+    if (publishedDate != nil)
+        [bookInfo setObject:publishedDate forKey:@"publishedDate"];
+    
+    NSNumber * pages = [volumeInfo objectForKey:@"pageCount"];
+    if (pages != nil)
+        [bookInfo setObject:pages forKey:@"pages"];
+    
+    NSString * language = [volumeInfo objectForKey:@"language"];
+    if (language != nil)
+        [bookInfo setObject:language forKey:@"language"];
+    
+    NSString * thumbnailUrl = [((NSDictionary *)[volumeInfo objectForKey:@"imageLinks"]) objectForKey:@"thumbnail"];
+    if (thumbnailUrl != nil) {
+        // This is a hack to remove any possibility of curling in the thumbnail image.
+        [bookInfo setObject:[thumbnailUrl stringByReplacingOccurrencesOfString:@"edge=curl" withString:@""] 
+                     forKey:@"thumbnailUrl"]; 
+    }
+    
+    NSArray * categories = (NSArray *)[volumeInfo objectForKey:@"categories"];
+    if (categories != nil)
+        [bookInfo setObject:[categories componentsJoinedByString:@", "] forKey:@"categories"];
+    
 
     // Now the more complicated to extract attributes
     for (NSDictionary * isbnDict in (NSArray *)[volumeInfo objectForKey:@"industryIdentifiers"]) {
@@ -149,7 +171,7 @@ NSString * const LCBookLookupErrorDomain = @"LCBookLookupErrorDomain";
     [formatter setDateFormat:@"yyyy-MM-dd"];
     [bookInfo setObject:[formatter dateFromString:[volumeInfo objectForKey:@"publishedDate"]] 
                  forKey:@"publishedDate"]; 
-         
+             
     return [NSDictionary dictionaryWithDictionary:bookInfo];
 }
 

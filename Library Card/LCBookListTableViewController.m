@@ -8,7 +8,7 @@
 
 #import "LCAppDelegate.h"
 #import "LCBookListTableViewController.h"
-#import "LCBookViewController.h"
+#import "LCBookTableViewController.h"
 #import "LCBookCell.h"
 
 @interface LCBookListTableViewController () <NSFetchedResultsControllerDelegate>
@@ -71,9 +71,9 @@
 
 - (void)viewWillAppear:(BOOL)animated {
     [self.navigationController setToolbarHidden:NO animated:YES];
-
-    
     [super viewWillAppear:animated];
+    
+    [self.tableView reloadData];
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -145,7 +145,7 @@
 
     }
     if ([segue.identifier isEqualToString:@"showBook"]) {
-        LCBookViewController * detailViewController = [segue destinationViewController];
+        LCBookTableViewController * detailViewController = [segue destinationViewController];
         detailViewController.book = [self.fetchedResultsController objectAtIndexPath:[self.tableView indexPathForSelectedRow]];
     }
 }

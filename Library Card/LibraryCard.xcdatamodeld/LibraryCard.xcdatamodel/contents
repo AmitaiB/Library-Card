@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model name="" userDefinedModelVersionIdentifier="" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="864" systemVersion="11B26" minimumToolsVersion="Automatic" macOSVersion="Automatic" iOSVersion="Automatic">
+<model name="" userDefinedModelVersionIdentifier="" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="870" systemVersion="11B26" minimumToolsVersion="Automatic" macOSVersion="Automatic" iOSVersion="Automatic">
     <entity name="Book" representedClassName="Book">
         <attribute name="authors" optional="YES" attributeType="String"/>
+        <attribute name="bookmark" optional="YES" attributeType="Integer 16" defaultValueString="0" syncable="YES"/>
         <attribute name="categories" optional="YES" attributeType="String"/>
         <attribute name="dateRead" optional="YES" attributeType="Date"/>
         <attribute name="googleId" optional="YES" attributeType="String"/>
         <attribute name="isbn" optional="YES" attributeType="String"/>
         <attribute name="isbn13" optional="YES" attributeType="String"/>
+        <attribute name="isEbook" optional="YES" attributeType="Boolean" syncable="YES"/>
         <attribute name="language" optional="YES" attributeType="String"/>
         <attribute name="pages" optional="YES" attributeType="Integer 16" defaultValueString="0"/>
         <attribute name="placeOfPublication" optional="YES" attributeType="String"/>
@@ -23,7 +25,7 @@
         <relationship name="books" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Book" inverseName="shelves" inverseEntity="Book"/>
     </entity>
     <elements>
-        <element name="Book" positionX="160" positionY="192" width="128" height="285"/>
+        <element name="Book" positionX="160" positionY="192" width="128" height="315"/>
         <element name="Shelf" positionX="160" positionY="192" width="128" height="75"/>
     </elements>
 </model>
