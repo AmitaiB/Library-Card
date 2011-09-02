@@ -37,13 +37,12 @@ NSInteger const kNumberOfSections = 5;
 - (void)endEditing;
 - (void)lookupISBN:(NSString *)isbn;
 
-- (void)adjustStatusDependentCells;
-
 - (CGSize)textViewSize:(UITextView*)textView;
 - (void)setContentViewSize:(UIView *)contentView;
 - (void)setTextViewSize:(UITextView*)textView;
 
-- (NSIndexPath *)shiftIndexPath:(NSIndexPath *)indexPath;
+- (NSInteger)translateSection:(NSInteger)section;
+- (NSIndexPath *)translateIndexPath:(NSIndexPath *)indexPath;
 
 @end
 
@@ -139,6 +138,12 @@ NSInteger const kNumberOfSections = 5;
     [dateReadPicker addTarget:self action:@selector(dateReadChanged:) forControlEvents:UIControlEventValueChanged];
     self.dateReadField.inputView = dateReadPicker;
     
+    // Add a shadow under the titleField
+    self.titleField.layer.shadowOpacity = 1.0;   
+    self.titleField.layer.shadowRadius = 0.0;
+    self.titleField.layer.shadowColor = [UIColor darkGrayColor].CGColor;
+    self.titleField.layer.shadowOffset = CGSizeMake(0.0, -1.0);    
+    
 }
 
 - (void)viewDidUnload {
@@ -161,9 +166,6 @@ NSInteger const kNumberOfSections = 5;
 
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
-    
-    NSLog(@"Text View Height: %f", self.textView.frame.size.height);
-    NSLog(@"Cell Height: %f", self.reviewCell.frame.size.height);
 }
 
 - (void)viewWillDisappear:(BOOL)animated {
@@ -215,9 +217,7 @@ NSInteger const kNumberOfSections = 5;
     self.ratingView.rating = [self.book.rating floatValue];
     
     self.title = self.book.title;
-    
-    [self adjustStatusDependentCells];
-    
+        
     // self.ratingView.editable = NO;
     // if ([self.book.status integerValue] == kReadStatus)
     //    self.ratingView.editable = YES;
@@ -234,34 +234,39 @@ NSInteger const kNumberOfSections = 5;
 #pragma mark - Reading Status Control
 
 - (IBAction)statusControlChanged:(id)sender {
-    self.book.status = [NSNumber numberWithInteger:self.statusControl.selectedSegmentIndex];
-    NSLog(@"New Status: %@", self.book.status);
 
-    [self.book save];
-    [self updateFromModel];
-}
-
-- (void)adjustStatusDependentCells {
-    [self.tableView beginUpdates];
-    //[self.tableView reloadData];
-    
     /*
-    if ([self.book.status integerValue] == kReadStatus ||
-        [self.book.status integerValue] == kReadingStatus)
-        // Show bookmarks
-        // Hide rating/review
-        numberOfSections = numberOfSections - 1;
+     SECTION     GLOBAL      READING     TO READ     READ
+     0           Author      Author      Author      Author
+     1           Book Info   Book Info   Book Info   Book Info
+     2           Status      Status      Status      Status
+     3           Bookmark    Bookmark                Review
+     4           Review
+     
+     */
     
-    else if ([self.book.status integerValue] == kToReadStatus)
-        // Hide bookmarks
-        // Hide rating/review
-        [self.tableView deleteSections:[[NSIndexSet alloc] initWithIndex:5] 
-                       withRowAnimation:UITableViewRowAnimationTop];
-
-    */
     
+    [self.tableView beginUpdates];
+    
+    if ([self.book.status integerValue] != kToReadStatus)
+        [self.tableView deleteSections:[NSIndexSet indexSetWithIndex:3] 
+                      withRowAnimation:UITableViewRowAnimationFade];        
+    
+    self.book.status = [NSNumber numberWithInteger:self.statusControl.selectedSegmentIndex];
+    
+    if ([self.book.status integerValue] != kToReadStatus)
+        [self.tableView insertSections:[NSIndexSet indexSetWithIndex:3] 
+                      withRowAnimation:UITableViewRowAnimationFade];
+        
     [self.tableView endUpdates];
     
+    if ([self.book.status integerValue] != kToReadStatus)
+        // Scroll the table view down 
+        [self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:3] 
+                              atScrollPosition:UITableViewScrollPositionMiddle 
+                                      animated:YES];
+
+    [self.book save];
 }
 
 #pragma mark - ISBN Lookups
@@ -461,15 +466,12 @@ NSInteger const kNumberOfSections = 5;
     return YES;
 }
 
-- (BOOL)textFieldShouldReturn:(UITextField*)textField {
-    NSLog(@"Did Should Return");
-    
+- (BOOL)textFieldShouldReturn:(UITextField*)textField {    
     [textField resignFirstResponder];
     return YES;
 }
 
 - (void)textFieldDidEndEditing:(UITextField *)textField {
-    NSLog(@"Did End Editing");
     
     if (textField == self.titleField) {
         self.book.title = self.titleField.text;
@@ -554,7 +556,7 @@ NSInteger const kNumberOfSections = 5;
     
     CGSize stringSize = [self textViewSize:textView];
     if (stringSize.height != textView.frame.size.height) {
-        NSLog(@"New Text View Height: %f", stringSize.height+10);
+        // NSLog(@"New Text View Height: %f", stringSize.height+10);
         [textView setFrame:CGRectMake(textView.frame.origin.x,
                                       textView.frame.origin.y,
                                       textView.frame.size.width,
@@ -568,6 +570,10 @@ NSInteger const kNumberOfSections = 5;
     
 }
 
+- (void)hideTextViewCell:(UITableViewCell *)cell {
+    // This effects removing the content view size for the cell.
+    
+}
 
 // as per: http://stackoverflow.com/questions/3749746/uitextview-in-a-uitableviewcell-smooth-auto-resize
 - (void)textViewDidChange:(UITextView *)textView {
@@ -590,12 +596,9 @@ NSInteger const kNumberOfSections = 5;
 #pragma mark - Table View Delegate (Text View Sizing)
 
 - (CGFloat)tableView:(UITableView  *)tableView heightForRowAtIndexPath:(NSIndexPath  *)indexPath {
-        
-    NSInteger section = indexPath.section;
-    if ([self.book.status integerValue] == kReadStatus && section == kBookBookmarkSection)
-        // We're being asked for section 4. We really want section 5.
-        section = kBookBookmarkSection + 1;
 
+    NSInteger section = [self translateIndexPath:indexPath].section;
+     
     if (section != kBookReviewSection || indexPath.row != 2)
         return self.tableView.rowHeight;
     
@@ -606,7 +609,7 @@ NSInteger const kNumberOfSections = 5;
 
     if (height < self.tableView.rowHeight) { 
         height = self.tableView.rowHeight;
-        NSLog(@"New Text View Height: %f", (self.tableView.rowHeight - 12.0));
+        // NSLog(@"New Text View Height: %f", (self.tableView.rowHeight - 12.0));
         [textView setFrame:CGRectMake(textView.frame.origin.x,
                                       textView.frame.origin.y,
                                       textView.frame.size.width,
@@ -618,41 +621,36 @@ NSInteger const kNumberOfSections = 5;
 
 #pragma mark - Table View Data Source (Reading Status Hacks)
 
-- (NSIndexPath *)shiftIndexPath:(NSIndexPath *)indexPath {
-    NSIndexPath * newIndexPath = indexPath;
-    
-    /*
-     Table View looks like this:
-     
-     1 AUTHOR SECTION
-     2 BOOK INFO SECTION
-     3 STATUS SECTION
-     4 BOOKMARK SECTION
-     5 REVIEW SECTION
-     
-     We want to selectively hide the bookmark and/or review section, by shifting the
-     section value of the index path as needed.
-     
-     In practice, this means we assume the numberOfSections method below is correct,
-     and that the table view should not ask for 5 sections when there should be 4.
-     In that case, the only case we have to worry about is kReadStatus, when the 
-     section index 4 will refer to the review section rather than the bookmark section.
-     */
-    
-    if ([self.book.status integerValue] == kReadStatus && indexPath.section == kBookBookmarkSection)
-        // We're being asked for section 4. We really want section 5.
-        newIndexPath = [NSIndexPath indexPathForRow:indexPath.row inSection:kBookReviewSection];
-
-    NSLog(@"Given Section: %d New Section: %d", indexPath.section, newIndexPath.section);
-    
-    return newIndexPath;
+- (NSInteger)translateSection:(NSInteger)section {
+    return [self translateIndexPath:[NSIndexPath indexPathForRow:0 inSection:section]].section;
 }
 
+- (NSIndexPath *)translateIndexPath:(NSIndexPath *)indexPath {
+    // Translate the given index path from a state-based table view to our global table view's data
+    /*
+        SECTION     GLOBAL      READING     TO READ     READ
+        0           Author      Author      Author      Author
+        1           Book Info   Book Info   Book Info   Book Info
+        2           Status      Status      Status      Status
+        3           Bookmark    Bookmark                Review
+        4           Review
+     
+     */
+    // In this case we're going from one of the states to global. The only case in which the section
+    // index number changes is in the READ case. In the other cases, the numberOfSections method will
+    // take care of the rest.
+    
+    NSIndexPath * newIndexPath = indexPath;
+    if ([self.book.status integerValue] == kReadStatus && indexPath.section == 3)
+        newIndexPath = [NSIndexPath indexPathForRow:indexPath.row inSection:4];
+    
+    return newIndexPath;
+
+}
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     
     NSInteger numberOfSections = [super numberOfSectionsInTableView:tableView];
-    return numberOfSections;
     
     if ([self.book.status integerValue] == kReadStatus ||
         [self.book.status integerValue] == kReadingStatus)
@@ -665,96 +663,110 @@ NSInteger const kNumberOfSections = 5;
         // Hide rating/review
         numberOfSections = numberOfSections - 2;            
 
-    
-    NSLog(@"Number of sections: %d", numberOfSections);
-    
     return numberOfSections;
-}
-
-/*
-- (NSArray *)sectionIndexTitlesForTableView:(UITableView *)tableView {
-    NSMutableArray * sectionIndexTitles = [[super sectionIndexTitlesForTableView:tableView] mutableCopy];
-    
-    // XXX: This won't work. Arrays are not sorted.
-    if ([self.book.status integerValue] == kReadStatus ||
-        [self.book.status integerValue] == kReadingStatus) {
-        // Show bookmarks
-        // Hide rating/review
-        // Remove the title at the review section index
-        [sectionIndexTitles removeObjectAtIndex:kBookReviewSection];
-    } else if ([self.book.status integerValue] == kToReadStatus) {
-        // Hide bookmarks
-        // Hide rating/review
-        // Remove the title at the bookmark and review section indexes
-        [sectionIndexTitles removeObjectAtIndex:kBookBookmarkSection];
-        [sectionIndexTitles removeObjectAtIndex:kBookReviewSection];
-    }
-    return sectionIndexTitles;
-}
-
-- (NSInteger)tableView:(UITableView *)tableView sectionForSectionIndexTitle:(NSString *)title atIndex:(NSInteger)index {
-    
-    NSInteger section = [super tableView:tableView sectionForSectionIndexTitle:title atIndex:index];
-    
-    if ([self.book.status integerValue] == kReadStatus && section == kBookReviewSection)
-        // We're being asked for section 4. We really want section 5.
-        section = kBookReviewSection - 1;
-    
-    return section;
-}
-
-- (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
-    NSIndexPath * shiftedIndexPath = [self shiftIndexPath:indexPath];
-    return [super tableView:tableView canEditRowAtIndexPath:shiftedIndexPath];
-}
-
-- (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath {
-    NSIndexPath * shiftedIndexPath = [self shiftIndexPath:indexPath];
-    return [super tableView:tableView canMoveRowAtIndexPath:shiftedIndexPath];
-}
-*/
-
-/*
-- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    NSIndexPath * shiftedIndexPath = [self shiftIndexPath:indexPath];
-    return [super tableView:tableView cellForRowAtIndexPath:shiftedIndexPath];
-}
-
-- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
-    NSIndexPath * shiftedIndexPath = [self shiftIndexPath:indexPath];
-    [super tableView:tableView commitEditingStyle:editingStyle forRowAtIndexPath:shiftedIndexPath];
-}
-
-- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath {
-    NSIndexPath * shiftedFromIndexPath = [self shiftIndexPath:fromIndexPath];
-    NSIndexPath * shiftedToIndexPath = [self shiftIndexPath:toIndexPath];
-    [super tableView:tableView moveRowAtIndexPath:shiftedFromIndexPath toIndexPath:shiftedToIndexPath];
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     
-    if ([self.book.status integerValue] == kReadStatus && section == kBookBookmarkSection)
+    if ([self.book.status integerValue] == kReadStatus && section == 3)
         // We're being asked for section 4. We really want section 5.
-        section = kBookBookmarkSection + 1;
-
+        section = 4;
+    
     return [super tableView:tableView numberOfRowsInSection:section];
 }
 
-- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
-    if ([self.book.status integerValue] == kReadStatus && section == kBookBookmarkSection)
-        // We're being asked for section 4. We really want section 5.
-        section = kBookBookmarkSection + 1;
-        
-    return [super tableView:tableView titleForHeaderInSection:section];
+- (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath {
+    return [super tableView:tableView canMoveRowAtIndexPath:[self translateIndexPath:indexPath]];
 }
 
-- (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
-    if ([self.book.status integerValue] == kReadStatus && section == kBookBookmarkSection)
-        // We're being asked for section 4. We really want section 5.
-        section = kBookBookmarkSection + 1;
-    
-    return [super tableView:tableView titleForFooterInSection:section];
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    return [super tableView:tableView cellForRowAtIndexPath:[self translateIndexPath:indexPath]];
 }
-*/
+
+- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
+    [super tableView:tableView commitEditingStyle:editingStyle forRowAtIndexPath:[self translateIndexPath:indexPath]];
+}
+
+- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath {
+    [super tableView:tableView 
+  moveRowAtIndexPath:[self translateIndexPath:fromIndexPath] 
+         toIndexPath:[self translateIndexPath:toIndexPath]];
+}
+
+- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
+    return [super tableView:tableView titleForHeaderInSection:[self translateSection:section]];
+}
+
+- (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {    
+    return [super tableView:tableView titleForFooterInSection:[self translateSection:section]];
+}
+
+#pragma mark - Table View Delegate (Reading Status Hacks)
+
+- (void)tableView:(UITableView *)tableView accessoryButtonTappedForRowWithIndexPath:(NSIndexPath *)indexPath {
+    [super tableView:tableView accessoryButtonTappedForRowWithIndexPath:[self translateIndexPath:indexPath]];
+}
+
+- (void)tableView:(UITableView *)tableView didDeselectRowAtIndexPath:(NSIndexPath *)indexPath {
+    [super tableView:tableView accessoryButtonTappedForRowWithIndexPath:[self translateIndexPath:indexPath]];
+}
+
+- (void)tableView:(UITableView *)tableView didEndEditingRowAtIndexPath:(NSIndexPath *)indexPath {
+    [super tableView:tableView didEndEditingRowAtIndexPath:[self translateIndexPath:indexPath]];
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    [super tableView:tableView didSelectRowAtIndexPath:[self translateIndexPath:indexPath]];
+}
+
+- (UITableViewCellEditingStyle)tableView:(UITableView *)tableView editingStyleForRowAtIndexPath:(NSIndexPath *)indexPath {
+    return [super tableView:tableView editingStyleForRowAtIndexPath:[self translateIndexPath:indexPath]];
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section {
+    return [super tableView:tableView heightForFooterInSection:[self translateSection:section]];
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
+    return [super tableView:tableView heightForHeaderInSection:[self translateSection:section]];
+}
+
+- (NSInteger)tableView:(UITableView *)tableView indentationLevelForRowAtIndexPath:(NSIndexPath *)indexPath {
+    return [super tableView:tableView indentationLevelForRowAtIndexPath:[self translateIndexPath:indexPath]];
+}
+
+- (BOOL)tableView:(UITableView *)tableView shouldIndentWhileEditingRowAtIndexPath:(NSIndexPath *)indexPath {
+    return [super tableView:tableView shouldIndentWhileEditingRowAtIndexPath:[self translateIndexPath:indexPath]];
+}
+
+- (NSIndexPath *)tableView:(UITableView *)tableView targetIndexPathForMoveFromRowAtIndexPath:(NSIndexPath *)sourceIndexPath toProposedIndexPath:(NSIndexPath *)proposedDestinationIndexPath {
+    return [super tableView:tableView targetIndexPathForMoveFromRowAtIndexPath:[self translateIndexPath:sourceIndexPath] toProposedIndexPath:[self translateIndexPath:proposedDestinationIndexPath]];
+}
+
+- (NSString *)tableView:(UITableView *)tableView titleForDeleteConfirmationButtonForRowAtIndexPath:(NSIndexPath *)indexPath {
+    return [super tableView:tableView titleForDeleteConfirmationButtonForRowAtIndexPath:[self translateIndexPath:indexPath]];
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section {
+    return [super tableView:tableView viewForFooterInSection:[self translateSection:section]];
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
+    return [super tableView:tableView viewForHeaderInSection:[self translateSection:section]];
+}
+
+- (void)tableView:(UITableView *)tableView willBeginEditingRowAtIndexPath:(NSIndexPath *)indexPath {
+    return [super tableView:tableView willBeginEditingRowAtIndexPath:[self translateIndexPath:indexPath]];
+}
+
+- (NSIndexPath *)tableView:(UITableView *)tableView willDeselectRowAtIndexPath:(NSIndexPath *)indexPath {
+    return [super tableView:tableView willDeselectRowAtIndexPath:[self translateIndexPath:indexPath]];
+}
+
+- (NSIndexPath *)tableView:(UITableView *)tableView willSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    return [super tableView:tableView willSelectRowAtIndexPath:[self translateIndexPath:indexPath]];
+}
+
+
 
 @end
