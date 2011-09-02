@@ -6,6 +6,7 @@
 //  Copyright (c) 2011 __MyCompanyName__. All rights reserved.
 //
 
+#import "LCBookListTableViewController.h"
 #import "LCBookTableViewController.h"
 #import "LCBarcodeScannerViewController.h"
 #import "LCBookLookup.h"
@@ -31,6 +32,7 @@ NSInteger const kNumberOfSections = 5;
     BOOL _textViewSizeIsUpdating;
 }
 
+@property (strong, nonatomic) UIPopoverController * masterPopoverController;
 @property (nonatomic, retain) MBProgressHUD * progressHud;
 
 - (void)updateFromModel;
@@ -55,6 +57,7 @@ NSInteger const kNumberOfSections = 5;
 @synthesize helpButton = _helpButton;
 @synthesize tweetButton = _tweetButton;
 @synthesize fetchButton = _fetchButton;
+@synthesize addButton = _addButton;
 
 @synthesize coverView = _coverView;
 
@@ -76,6 +79,7 @@ NSInteger const kNumberOfSections = 5;
 @synthesize ratingView = _ratingView;
 @synthesize textView = _textView;
 
+@synthesize masterPopoverController = _masterPopoverController;
 @synthesize progressHud = _progressHud;
 
 - (id)initWithStyle:(UITableViewStyle)style
@@ -114,13 +118,11 @@ NSInteger const kNumberOfSections = 5;
     self.ratingView.selectedImage = [UIImage imageNamed:@"star.png"];
     self.ratingView.halfSelectedImage = [UIImage imageNamed:@"star_half.png"];
     
-    if (self.book == nil) {
+    if (self.book == nil && UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
         // If we haven't gotten a book, we need to get one. Pop up the barcode scanner.
         [self performSegueWithIdentifier:@"scanBarcode" sender:self];
     }
-    
-    [self updateFromModel];
-    
+        
     self.progressHud = [[MBProgressHUD alloc] initWithView:self.view];
 	
     // Add HUD to screen
@@ -141,8 +143,8 @@ NSInteger const kNumberOfSections = 5;
     // Add a shadow under the titleField
     self.titleField.layer.shadowOpacity = 1.0;   
     self.titleField.layer.shadowRadius = 0.0;
-    self.titleField.layer.shadowColor = [UIColor darkGrayColor].CGColor;
-    self.titleField.layer.shadowOffset = CGSizeMake(0.0, -1.0);    
+    self.titleField.layer.shadowColor = [UIColor whiteColor].CGColor;
+    self.titleField.layer.shadowOffset = CGSizeMake(0.0, 1.0);    
     
 }
 
@@ -181,7 +183,8 @@ NSInteger const kNumberOfSections = 5;
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
-    // Return YES for supported orientations
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
+        return YES;
     return (interfaceOrientation == UIInterfaceOrientationPortrait);
 }
 
@@ -195,40 +198,108 @@ NSInteger const kNumberOfSections = 5;
 }
 
 - (void)updateFromModel {
-    if (self.book == nil)
-        return;
-    
-    self.navigationItem.prompt = nil;
-    
-    self.titleField.text = self.book.title;
-    self.authorField.text = self.book.authors;
-    self.publisherField.text = self.book.publisher;
-    self.pagesField.text = [self.book.pages stringValue];
-    self.isbn13Field.text = self.book.isbn13;
-    self.datePublishedField.text = self.book.formattedPublishedDate;
-    self.dateReadField.text = self.book.formattedDateRead;
-    self.bookmarkField.text = [self.book.bookmark stringValue];
-    self.textView.text = self.book.review;
-    
-    self.coverView.book = self.book;
-    [self.coverView update];
-    
-    self.statusControl.selectedSegmentIndex = [self.book.status integerValue];
-    self.ratingView.rating = [self.book.rating floatValue];
-    
-    self.title = self.book.title;
+    if (self.book == nil) {
+        self.titleField.text = nil;
+        self.authorField.text = nil;
+        self.publisherField.text = nil;
+        self.pagesField.text = nil;
+        self.isbn13Field.text = nil;
+        self.datePublishedField.text = nil;
+        self.dateReadField.text = nil;
+        self.bookmarkField.text = nil;
+        self.textView.text = nil;
         
-    // self.ratingView.editable = NO;
-    // if ([self.book.status integerValue] == kReadStatus)
-    //    self.ratingView.editable = YES;
-    
-    // self.navigationItem.title = self.book.title;
+        self.coverView.book = nil;
+        [self.coverView update];
+        
+        self.statusControl.selectedSegmentIndex = kToReadStatus;
+        self.ratingView.rating = 0.0;
+        
+        self.title = nil;
+        
+        // self.ratingView.editable = NO;
+        // if ([self.book.status integerValue] == kReadStatus)
+        //    self.ratingView.editable = YES;
+        
+        // self.navigationItem.title = self.book.title;
+        
+    } else {
+        self.navigationItem.prompt = nil;
+        
+        self.titleField.text = self.book.title;
+        self.authorField.text = self.book.authors;
+        self.publisherField.text = self.book.publisher;
+        self.pagesField.text = [self.book.pages stringValue];
+        self.isbn13Field.text = self.book.isbn13;
+        self.datePublishedField.text = self.book.formattedPublishedDate;
+        self.dateReadField.text = self.book.formattedDateRead;
+        self.bookmarkField.text = [self.book.bookmark stringValue];
+        self.textView.text = self.book.review;
+        
+        self.coverView.book = self.book;
+        [self.coverView update];
+        
+        self.statusControl.selectedSegmentIndex = [self.book.status integerValue];
+        self.ratingView.rating = [self.book.rating floatValue];
+        
+        self.title = self.book.title;
+        
+        // self.ratingView.editable = NO;
+        // if ([self.book.status integerValue] == kReadStatus)
+        //    self.ratingView.editable = YES;
+        
+        // self.navigationItem.title = self.book.title;
+
+    }
     
     if (self.book.isbn13 != nil)
         self.fetchButton.enabled = YES;
     else
         self.fetchButton.enabled = NO;
 
+    [self.tableView reloadData];
+}
+
+#pragma mark - Getters/Setters
+
+- (void)setBook:(Book *)book {
+    if (_book != book) {
+        _book = book;
+        
+        NSLog(@"Setting book to %@", book);
+        
+        // Update the view.
+        [self updateFromModel];
+    }
+    
+    if (self.masterPopoverController != nil) {
+        [self.masterPopoverController dismissPopoverAnimated:YES];
+    }        
+}
+
+#pragma mark - Split view
+
+- (void)splitViewController:(UISplitViewController *)splitController 
+     willHideViewController:(UIViewController *)viewController 
+          withBarButtonItem:(UIBarButtonItem *)barButtonItem 
+       forPopoverController:(UIPopoverController *)popoverController {
+    barButtonItem.title = NSLocalizedString(@"Books", @"Books");
+    [self.navigationItem setLeftBarButtonItem:barButtonItem animated:YES];
+    self.masterPopoverController = popoverController;
+}
+
+- (void)splitViewController:(UISplitViewController *)splitController 
+     willShowViewController:(UIViewController *)viewController 
+  invalidatingBarButtonItem:(UIBarButtonItem *)barButtonItem {
+    // Called when the view is shown again in the split view, invalidating the button and popover controller.
+    [self.navigationItem setLeftBarButtonItem:nil animated:YES];
+    self.masterPopoverController = nil;
+}
+
+- (IBAction)addBook:(id)sender {
+    UINavigationController * masterNavigationController = [self.splitViewController.viewControllers objectAtIndex:0];
+    LCBookListTableViewController * controller = (LCBookListTableViewController *)masterNavigationController.topViewController;
+    [controller addBook:sender];
 }
 
 #pragma mark - Reading Status Control
@@ -245,6 +316,8 @@ NSInteger const kNumberOfSections = 5;
      
      */
     
+    if (self.statusControl.selectedSegmentIndex == [self.book.status integerValue])
+        return;
     
     [self.tableView beginUpdates];
     
@@ -318,7 +391,8 @@ NSInteger const kNumberOfSections = 5;
 
 - (void)bookLookupFailedWithError:(NSError *)error {
     [self.progressHud hide:YES];
-    
+    self.tableView.scrollEnabled = YES;
+
     Alert(@"Unable to find book", @"Please double check the ISBN or try again later.", @"OK", nil);
     
     if (self.book == nil) {
@@ -399,12 +473,14 @@ NSInteger const kNumberOfSections = 5;
     [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone 
                                                   target:self 
                                                   action:@selector(endEditing)];
-    
 }
 
 - (void)keyboardWillHide:(NSNotification *)notification {
     // Remove the done button.
-    self.navigationItem.rightBarButtonItem = self.cameraButton;
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
+        self.navigationItem.rightBarButtonItem = self.addButton;
+    else
+        self.navigationItem.rightBarButtonItem = self.cameraButton;
 }
 
 
@@ -497,7 +573,7 @@ NSInteger const kNumberOfSections = 5;
         self.book.pages = [NSNumber numberWithInt:[self.pagesField.text intValue]];
         [self.book save];
     } else if (textField == self.bookmarkField) {
-        self.book.bookmark = [NSNumber numberWithInt:[self.pagesField.text intValue]];
+        self.book.bookmark = [NSNumber numberWithInteger:[self.bookmarkField.text integerValue]];
         [self.book save];
     }
     
@@ -539,12 +615,13 @@ NSInteger const kNumberOfSections = 5;
     // (2) if they are not equal, then update the height of the UITableViewCell
     if ((self.textView.frame.size.height + 12.0f) != contentView.frame.size.height) {
         [self.tableView beginUpdates];
-        [self.tableView endUpdates];
-        
+        NSLog(@"Content width: %f", contentView.frame.size.width);
         [contentView setFrame:CGRectMake(0,
                                          0,
                                          contentView.frame.size.width,
                                          (self.textView.frame.size.height+12.0f))];
+        [self.tableView endUpdates];
+
     }
     
 }
@@ -704,6 +781,7 @@ NSInteger const kNumberOfSections = 5;
 #pragma mark - Table View Delegate (Reading Status Hacks)
 
 - (void)tableView:(UITableView *)tableView accessoryButtonTappedForRowWithIndexPath:(NSIndexPath *)indexPath {
+    return;
     [super tableView:tableView accessoryButtonTappedForRowWithIndexPath:[self translateIndexPath:indexPath]];
 }
 
@@ -760,10 +838,12 @@ NSInteger const kNumberOfSections = 5;
 }
 
 - (NSIndexPath *)tableView:(UITableView *)tableView willDeselectRowAtIndexPath:(NSIndexPath *)indexPath {
+    return nil;
     return [super tableView:tableView willDeselectRowAtIndexPath:[self translateIndexPath:indexPath]];
 }
 
 - (NSIndexPath *)tableView:(UITableView *)tableView willSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    return nil;
     return [super tableView:tableView willSelectRowAtIndexPath:[self translateIndexPath:indexPath]];
 }
 
