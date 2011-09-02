@@ -37,7 +37,16 @@ typedef enum {
 @property (nonatomic, retain) NSString * googleId;
 @property (nonatomic, retain) NSNumber * bookmark;
 @property (nonatomic, retain) NSNumber * isEbook;
-@property (nonatomic, retain) NSSet *shelves;
+@property (nonatomic, retain) NSString * review;
+@property (nonatomic, retain) NSSet * shelves;
+
+@property (nonatomic, readonly) NSString * formattedPublishedDate;
+@property (nonatomic, readonly) NSString * formattedDateRead;
+
++ (Book *)bookFromInfo:(NSDictionary *)bookInfo;
+- (void)setAttributesFromDict:(NSDictionary *)bookInfo;
+- (void)save;
+
 @end
 
 @interface Book (CoreDataGeneratedAccessors)
@@ -46,7 +55,5 @@ typedef enum {
 - (void)removeShelvesObject:(Shelf *)value;
 - (void)addShelves:(NSSet *)values;
 - (void)removeShelves:(NSSet *)values;
-
-- (void)save;
 
 @end

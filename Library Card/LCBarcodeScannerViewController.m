@@ -79,7 +79,11 @@
 }
 
 - (IBAction)cancel:(id)sender { 
-    [self.delegate barcodeScannerDidFinish:self];
+    [self.delegate barcodeScannerDidCancel:self];
+}
+
+- (IBAction)dismiss:(id)sender {
+    [self.delegate barcodeScannerDidDismiss:self];
 }
 
 #pragma mark - ZBar Reader Delegate
@@ -95,7 +99,11 @@
 
     NSLog(@"Read String: %@", readString);
     
-    [self lookupISBN:readString];
+    self.result = readString;
+    [self.delegate barcodeScannerDidFinish:self];
+
+    // Leave the lookups to the book table view.
+    // [self lookupISBN:readString];
 }
 
 #pragma mark - ISBN Lookups

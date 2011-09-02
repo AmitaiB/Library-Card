@@ -13,6 +13,8 @@
 
 @protocol LCBarcodeScannerDelegate
 - (void)barcodeScannerDidFinish:(LCBarcodeScannerViewController *)barcodeScannerViewController; 
+- (void)barcodeScannerDidCancel:(LCBarcodeScannerViewController *)barcodeScannerViewController; 
+- (void)barcodeScannerDidDismiss:(LCBarcodeScannerViewController *)barcodeScannerViewController; 
 @end
 
 @interface LCBarcodeScannerViewController : UIViewController <ZBarReaderViewDelegate>
@@ -21,6 +23,10 @@
 @property (nonatomic, retain) IBOutlet ZBarReaderView * readerView;
 
 @property (nonatomic, retain) id result;
+
+- (IBAction)cancel:(id)sender;
+- (IBAction)help:(id)sender;
+- (IBAction)dismiss:(id)sender;
 
 - (void)lookupISBN:(NSString *)isbn;
 

@@ -19,15 +19,25 @@
 @property (nonatomic, retain) IBOutlet UIBarButtonItem * cameraButton;
 @property (nonatomic, retain) IBOutlet UIBarButtonItem * helpButton;
 @property (nonatomic, retain) IBOutlet UIBarButtonItem * tweetButton;
+@property (nonatomic, retain) IBOutlet UIBarButtonItem * fetchButton;
 
 @property (nonatomic, retain) IBOutlet LCCoverView * coverView;
 
 @property (nonatomic, retain) IBOutlet UITextField * titleField;
 @property (nonatomic, retain) IBOutlet UITextField * authorField;
 @property (nonatomic, retain) IBOutlet UITextField * publisherField;
-@property (nonatomic, retain) IBOutlet UITextField * dateField;
 @property (nonatomic, retain) IBOutlet UITextField * isbn13Field;
 @property (nonatomic, retain) IBOutlet UITextField * pagesField;
+@property (nonatomic, retain) IBOutlet UITextField * bookmarkField;
+@property (nonatomic, retain) IBOutlet UITextField * datePublishedField;
+@property (nonatomic, retain) IBOutlet UITextField * dateReadField;
+
+@property (nonatomic, retain) IBOutlet UITableViewCell * ratingCell;
+@property (nonatomic, retain) IBOutlet UITableViewCell * bookmarkCell;
+@property (nonatomic, retain) IBOutlet UITableViewCell * reviewCell;
+@property (nonatomic, retain) IBOutlet UITableViewCell * dateReadCell;
+
+@property (nonatomic, retain) IBOutlet UIDatePicker * datePicker;
 
 @property (nonatomic, retain) IBOutlet UISegmentedControl * statusControl;
 @property (nonatomic, retain) IBOutlet LCRatingView * ratingView;
@@ -35,5 +45,6 @@
 
 - (IBAction)statusControlChanged:(id)sender;
 - (IBAction)tweet:(id)sender;
+- (IBAction)fetchInfo:(id)sender;
 
 @end
