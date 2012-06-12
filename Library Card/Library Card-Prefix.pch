@@ -17,12 +17,17 @@
 #define Alert(title, msg, button, buttons...) {UIAlertView *__alert = [[UIAlertView alloc] initWithTitle:title message:msg delegate:self cancelButtonTitle:button otherButtonTitles:buttons];[__alert show];}
 
 
+#ifdef __APPLE__
+#include "TargetConditionals.h"
+#endif
+
 #ifdef __OBJC__
     #import <UIKit/UIKit.h>
     #import <Foundation/Foundation.h>
     #import <CoreData/CoreData.h>
     #import <QuartzCore/QuartzCore.h>
     #import <Twitter/Twitter.h>
+    #import "UIDevice-Capabilities.h"
 
 #endif
 

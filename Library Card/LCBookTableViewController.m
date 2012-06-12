@@ -9,6 +9,7 @@
 #import "LCBookListTableViewController.h"
 #import "LCBookTableViewController.h"
 #import "LCBarcodeScannerViewController.h"
+#import "LCSearchResultsTableViewController.h"
 #import "LCBookLookup.h"
 #import "LCAppDelegate.h"
 #import "LCBookLookup.h"
@@ -27,7 +28,7 @@ typedef enum {
 
 NSInteger const kNumberOfSections = 5;
 
-@interface LCBookTableViewController () <UITextFieldDelegate, LCBarcodeScannerDelegate, LCRatingViewDelegate, LCBookLookupDelegate, MBProgressHUDDelegate> {
+@interface LCBookTableViewController () <UITextFieldDelegate, LCBarcodeScannerDelegate, LCRatingViewDelegate, LCBookLookupDelegate, MBProgressHUDDelegate, LCSearchResultsDelegate> {
     @private
     BOOL _textViewSizeIsUpdating;
 }
@@ -35,9 +36,13 @@ NSInteger const kNumberOfSections = 5;
 @property (strong, nonatomic) UIPopoverController * masterPopoverController;
 @property (nonatomic, retain) MBProgressHUD * progressHud;
 
+- (void)configureCameraButton;
+- (void)handleTapBehind:(UITapGestureRecognizer *)sender;
+
 - (void)updateFromModel;
 - (void)endEditing;
 - (void)lookupISBN:(NSString *)isbn;
+- (void)foundBook:(NSDictionary *)bookInfo;
 
 - (CGSize)textViewSize:(UITextView*)textView;
 - (void)setContentViewSize:(UIView *)contentView;
@@ -45,7 +50,7 @@ NSInteger const kNumberOfSections = 5;
 
 - (NSInteger)translateSection:(NSInteger)section;
 - (NSIndexPath *)translateIndexPath:(NSIndexPath *)indexPath;
-
+- (void)searchResultsControllerSelectedBook:(NSDictionary *)bookInfo;
 @end
 
 
@@ -82,6 +87,8 @@ NSInteger const kNumberOfSections = 5;
 @synthesize masterPopoverController = _masterPopoverController;
 @synthesize progressHud = _progressHud;
 
+@synthesize tapBehindRecognizer = _tapBehindRecognizer;
+
 - (id)initWithStyle:(UITableViewStyle)style
 {
     self = [super initWithStyle:style];
@@ -113,16 +120,28 @@ NSInteger const kNumberOfSections = 5;
                                                  name:UIKeyboardWillHideNotification 
                                                object:nil];
         
+    [[NSNotificationCenter defaultCenter] addObserver:self 
+                                             selector:@selector(reload:) 
+                                                 name:@"RefreshAllViews" 
+                                               object:[[UIApplication sharedApplication] delegate]];
+
     // Set up the rating view
     self.ratingView.defaultImage = [UIImage imageNamed:@"star_blank.png"];
     self.ratingView.selectedImage = [UIImage imageNamed:@"star.png"];
     self.ratingView.halfSelectedImage = [UIImage imageNamed:@"star_half.png"];
     
-    if (self.book == nil && UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
-        // If we haven't gotten a book, we need to get one. Pop up the barcode scanner.
+    if (self.book == nil 
+        && UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone 
+#if !(TARGET_IPHONE_SIMULATOR)
+        && [[UIDevice currentDevice] supportsCapability:UIDeviceAutoFocusCameraCapability]
+#endif
+        ) {
+        // If we haven't gotten a book, we need to get one. Pop up the barcode scanner only if autofocus is supported.
         [self performSegueWithIdentifier:@"scanBarcode" sender:self];
     }
-        
+    
+    [self configureCameraButton];
+            
     self.progressHud = [[MBProgressHUD alloc] initWithView:self.view];
 	
     // Add HUD to screen
@@ -141,11 +160,18 @@ NSInteger const kNumberOfSections = 5;
     self.dateReadField.inputView = dateReadPicker;
     
     // Add a shadow under the titleField
-    self.titleField.layer.shadowOpacity = 1.0;   
-    self.titleField.layer.shadowRadius = 0.0;
-    self.titleField.layer.shadowColor = [UIColor whiteColor].CGColor;
-    self.titleField.layer.shadowOffset = CGSizeMake(0.0, 1.0);    
-    
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+        self.titleField.layer.shadowOpacity = 1.0;   
+        self.titleField.layer.shadowRadius = 0.0;
+        self.titleField.layer.shadowColor = [UIColor whiteColor].CGColor;
+        self.titleField.layer.shadowOffset = CGSizeMake(0.0, 1.0);
+    } else {
+        self.titleField.layer.shadowOpacity = 1.0;   
+        self.titleField.layer.shadowRadius = 0.0;
+        self.titleField.layer.shadowColor = [UIColor darkGrayColor].CGColor;
+        self.titleField.layer.shadowOffset = CGSizeMake(0.0, -1.0);
+    }
+        
 }
 
 - (void)viewDidUnload {
@@ -156,11 +182,13 @@ NSInteger const kNumberOfSections = 5;
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
-    [self.navigationController setToolbarHidden:NO animated:YES];
+    [self.navigationController setToolbarHidden:NO animated:NO];
     
     self.tweetButton.enabled = NO;
     if ([TWTweetComposeViewController canSendTweet])
         self.tweetButton.enabled = YES;
+
+    [self updateFromModel];
 
     self.coverView.book = self.book;
 
@@ -168,12 +196,20 @@ NSInteger const kNumberOfSections = 5;
 
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
+    
+    if ((UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)) {
+        self.tapBehindRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapBehind:)];
+        [self.tapBehindRecognizer setNumberOfTapsRequired:1];
+        self.tapBehindRecognizer.cancelsTouchesInView = NO;
+        [self.view.window addGestureRecognizer:self.tapBehindRecognizer];
+    }
+
 }
 
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
     [self.view.window endEditing:YES];
-    
+    [self.view.window removeGestureRecognizer:self.tapBehindRecognizer];
 }
 
 - (void)viewDidDisappear:(BOOL)animated {
@@ -189,16 +225,36 @@ NSInteger const kNumberOfSections = 5;
 }
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-    self.navigationItem.backBarButtonItem.title = @"Back";
 
     if ([segue.identifier isEqualToString:@"scanBarcode"]) {
         LCBarcodeScannerViewController * detailViewController = [segue destinationViewController];
         detailViewController.delegate = self;
+    } else if ([segue.identifier isEqualToString:@"showSearchResults"]) {
+        UINavigationController * navController = [segue destinationViewController];
+        LCSearchResultsTableViewController * detailViewController = (LCSearchResultsTableViewController *)navController.topViewController;
+        detailViewController.delegate = self;
+        
+        // Hand off the book lookup to the search controller
+        detailViewController.bookLookup = (LCBookLookup *)sender;
+        ((LCBookLookup *)sender).delegate = detailViewController;
     }
 }
 
+- (void)configureCameraButton {
+#if !(TARGET_IPHONE_SIMULATOR)
+    if (![[UIDevice currentDevice] supportsCapability:UIDeviceCameraCapability])
+        // If a camera is supported on this device, allow the camera
+        self.cameraButton.enabled = NO;
+    else
+#endif
+        self.cameraButton.enabled = YES;
+}
+
 - (void)updateFromModel {
+    
     if (self.book == nil) {
+        self.navigationItem.prompt = @"Enter title, author, or ISBN to search";
+
         self.titleField.text = nil;
         self.authorField.text = nil;
         self.publisherField.text = nil;
@@ -252,13 +308,76 @@ NSInteger const kNumberOfSections = 5;
 
     }
     
-    if (self.book.isbn13 != nil)
-        self.fetchButton.enabled = YES;
-    else
-        self.fetchButton.enabled = NO;
-
+    DEBUG(@"Updated table view data from model.");
     [self.tableView reloadData];
 }
+
+- (void)handleTapBehind:(UITapGestureRecognizer *)sender {
+    DEBUG(@"Handling Tap Behind");
+    
+    if (sender.state == UIGestureRecognizerStateEnded) {
+        CGPoint location = [sender locationInView:nil]; //Passing nil gives us coordinates in the window
+        
+        //Then we convert the tap's location into the local view's coordinate system, and test to see if it's in or outside. If outside, dismiss the view.
+        
+        if (![self.view pointInside:[self.navigationController.view convertPoint:location fromView:self.view.window] withEvent:nil] &&
+            ![self.view pointInside:[self.navigationController.toolbar convertPoint:location fromView:self.view.window] withEvent:nil]) {
+            [self dismissModalViewControllerAnimated:YES];
+            [self.view.window removeGestureRecognizer:sender];
+        }
+    }
+}
+
+// this listens for the notification that the app delegate has processed new changes from iCloud
+// it then decides if it wants to reload the view based on whether or not the recipe shown in the
+// detail view is impacted by those changes.
+// Basically it trolls through the notification userInfo to see if our recipe or its photo was changed
+- (void)reloadRecipe:(NSNotification*)note {
+    NSDictionary* ui = [note userInfo];
+    NSManagedObjectID * bookID = [self.book objectID];
+    // NSManagedObjectID * photoID = [recipe.image objectID];
+    
+    if (bookID) {
+        BOOL shouldReload = ([ui objectForKey:NSInvalidatedAllObjectsKey] != nil);
+        BOOL wasInvalidated = ([ui objectForKey:NSInvalidatedAllObjectsKey] != nil);
+        
+        NSString *interestingKeys[] = { NSUpdatedObjectsKey, NSRefreshedObjectsKey, NSInvalidatedObjectsKey };
+        int c = (sizeof(interestingKeys) / sizeof(NSString*));
+        
+        for (int i = 0; i < c; i++) {
+            NSSet* collection = [ui objectForKey:interestingKeys[i]];
+            if (collection) {
+                for (NSManagedObject * mo in collection) {
+                    // if ([[mo objectID] isEqual:bookID] || [[mo objectID] isEqual:photoID]) {
+                    if ([[mo objectID] isEqual:bookID]) {
+                        if ([interestingKeys[i] isEqual:NSInvalidatedObjectsKey]) {
+                            wasInvalidated = YES;
+                        }
+                        shouldReload = YES;
+                        break;
+                    }
+                }
+            }
+            if (shouldReload) {
+                break;
+            }
+        }
+        
+        if (shouldReload) {
+            NSManagedObjectContext *moc = self.book.managedObjectContext;
+            
+            if (wasInvalidated) {
+                // if the object was invalidated, it is no longer a part of our MOC
+                // we need a new MO for the objectID we care about
+                // this generally only happens if the object was released to rc 0, the persistent store removed, or the MOC reset
+                self.book = (Book *)[moc objectWithID:bookID];
+            }
+            
+            [self viewWillAppear:NO];
+        }
+    }
+}
+
 
 #pragma mark - Getters/Setters
 
@@ -266,7 +385,7 @@ NSInteger const kNumberOfSections = 5;
     if (_book != book) {
         _book = book;
         
-        NSLog(@"Setting book to %@", book);
+        DEBUG(@"Setting book to %@", book);
         
         // Update the view.
         [self updateFromModel];
@@ -306,16 +425,14 @@ NSInteger const kNumberOfSections = 5;
 
 - (IBAction)statusControlChanged:(id)sender {
 
-    /*
-     SECTION     GLOBAL      READING     TO READ     READ
-     0           Author      Author      Author      Author
-     1           Book Info   Book Info   Book Info   Book Info
-     2           Status      Status      Status      Status
-     3           Bookmark    Bookmark                Review
-     4           Review
+    // SECTION     GLOBAL      READING     TO READ     READ
+    // 0           Author      Author      Author      Author
+    // 1           Book Info   Book Info   Book Info   Book Info
+    // 2           Status      Status      Status      Status
+    // 3           Bookmark    Bookmark                Review
+    // 4           Review
      
-     */
-    
+
     if (self.statusControl.selectedSegmentIndex == [self.book.status integerValue])
         return;
     
@@ -344,8 +461,26 @@ NSInteger const kNumberOfSections = 5;
 
 #pragma mark - ISBN Lookups
 
-- (IBAction)fetchInfo:(id)sender {
-    [self lookupISBN:self.isbn13Field.text];
+- (IBAction)find:(id)sender {
+    NSMutableDictionary * searchDictionary = [NSMutableDictionary dictionary];
+    if (self.titleField.text != nil)
+        [searchDictionary setObject:self.titleField.text forKey:@"title"];
+    
+    if (self.authorField.text != nil)
+        [searchDictionary setObject:self.authorField.text forKey:@"authors"];
+    
+    if (self.publisherField.text != nil)
+        [searchDictionary setObject:self.publisherField.text forKey:@"publisher"];
+    
+    // Only directly match the ISBN if it's the only thing given.
+    if ([searchDictionary count] == 0 && self.isbn13Field.text != nil)
+        [searchDictionary setObject:self.isbn13Field.text forKey:@"isbn13"];
+    
+    LCBookLookup * bookLookup = [[LCBookLookup alloc] init];
+    bookLookup.delegate = self;
+    [bookLookup lookupBookInfo:searchDictionary];
+    
+    [self.progressHud show:YES];
 }
 
 - (void)lookupISBN:(NSString *)isbn {
@@ -358,12 +493,11 @@ NSInteger const kNumberOfSections = 5;
 
 #pragma mark - Lookup Delegate 
 
-- (void)bookLookupFoundBook:(NSDictionary *)bookInfo {
-    [self.progressHud hide:YES];
+- (void)foundBook:(NSDictionary *)bookInfo {
     
     if (self.book == nil) {
         // If the book is nil, create it.
-        NSManagedObjectContext * managedObjectContext = ((LCAppDelegate *)[UIApplication sharedApplication].delegate).managedObjectContext;
+        NSManagedObjectContext * managedObjectContext = [((LCAppDelegate *)[[UIApplication sharedApplication] delegate]) managedObjectContext];
         self.book = [NSEntityDescription insertNewObjectForEntityForName:@"Book" 
                                                   inManagedObjectContext:managedObjectContext];
     }
@@ -381,7 +515,7 @@ NSInteger const kNumberOfSections = 5;
     self.book.isbn13 = [bookInfo objectForKey:@"isbn13"];
     self.book.publishedDate = [bookInfo objectForKey:@"publishedDate"];
     
-    NSLog(@"Saving Book: %@", self.book);
+    DEBUG(@"Saving Book: %@", self.book);
     
     [self.book save];
     [self updateFromModel];
@@ -389,11 +523,11 @@ NSInteger const kNumberOfSections = 5;
 
 }
 
-- (void)bookLookupFailedWithError:(NSError *)error {
+- (void)bookLookup:bookLookup failedWithError:(NSError *)error {
     [self.progressHud hide:YES];
     self.tableView.scrollEnabled = YES;
 
-    Alert(@"Unable to find book", @"Please double check the ISBN or try again later.", @"OK", nil);
+    Alert(@"Unable to find book", @"Please double check the title, author, or ISBN, and try again.", @"OK", nil);
     
     if (self.book == nil) {
         // If the book is nil, pop us back to the books list
@@ -402,6 +536,28 @@ NSInteger const kNumberOfSections = 5;
 
 }
 
+- (void)bookLookupGotResults:(LCBookLookup *)bookLookup {
+    [self.progressHud hide:YES];
+    
+    if (bookLookup.numberOfResults == 1) {
+        [self foundBook:[bookLookup.results objectAtIndex:0]];
+        return;
+    }
+    
+    [self performSegueWithIdentifier:@"showSearchResults" sender:bookLookup];
+}
+
+#pragma mark - Search Delegate 
+
+- (void)searchResultsControllerSelectedBook:(NSDictionary *)bookInfo {
+    // Reuse the same method from the book lookup delegate
+    [self foundBook:bookInfo];
+    [self dismissModalViewControllerAnimated:YES];
+}
+
+- (void)searchResultsControllerCanceled {
+    [self dismissModalViewControllerAnimated:YES];
+}
 
 #pragma mark - Social Media
 
@@ -422,9 +578,9 @@ NSInteger const kNumberOfSections = 5;
     [self presentViewController:twitter animated:YES completion:nil];
     twitter.completionHandler = ^(TWTweetComposeViewControllerResult res) {
         if(res == TWTweetComposeViewControllerResultDone) {
-            NSLog(@"Tweet was tweeted");
+            DEBUG(@"Tweet was tweeted");
         } else if(res == TWTweetComposeViewControllerResultCancelled) {
-            NSLog(@"Tweet was NOT tweeted");
+            DEBUG(@"Tweet was NOT tweeted");
         }
         
         [self dismissModalViewControllerAnimated:YES];
@@ -481,6 +637,7 @@ NSInteger const kNumberOfSections = 5;
         self.navigationItem.rightBarButtonItem = self.addButton;
     else
         self.navigationItem.rightBarButtonItem = self.cameraButton;
+    
 }
 
 
@@ -497,14 +654,14 @@ NSInteger const kNumberOfSections = 5;
         // If the book is nil, pop us back to the books list
         [self dismissModalViewControllerAnimated:YES];
 
-        if (self.book == nil)
+        if ((self.book == nil) && (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone))
             [self.navigationController popViewControllerAnimated:NO];
     }
     
     if (barcodeScannerViewController.result != nil) {
         [self lookupISBN:barcodeScannerViewController.result];
                 
-    } else if (self.book == nil) {
+    } else if ((self.book == nil) && (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone)) {
         // If the book is nil, pop us back to the books list
         [self.navigationController popViewControllerAnimated:NO];
     }
@@ -515,15 +672,13 @@ NSInteger const kNumberOfSections = 5;
 - (void)barcodeScannerDidCancel:(LCBarcodeScannerViewController *)barcodeScannerViewController {
     [self dismissModalViewControllerAnimated:YES];
     
-    if (self.book == nil)
+    if ((self.book == nil) && (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone))
         [self.navigationController popViewControllerAnimated:NO];
+    
 }
 
 - (void)barcodeScannerDidDismiss:(LCBarcodeScannerViewController *)barcodeScannerViewController {
-    [self dismissModalViewControllerAnimated:YES];
-    
-    if (self.book == nil)
-        self.navigationItem.prompt = @"Enter ISBN to download book information.";
+    [self dismissModalViewControllerAnimated:YES];    
 }
 
 
@@ -560,13 +715,6 @@ NSInteger const kNumberOfSections = 5;
         [self.book save];
     } else if (textField == self.isbn13Field) {
         self.book.isbn13 = self.isbn13Field.text;
-
-        if (self.isbn13Field.text != nil && [[[self.isbn13Field.text componentsSeparatedByCharactersInSet:
-                                               [[NSCharacterSet decimalDigitCharacterSet] invertedSet]] 
-                                              componentsJoinedByString:@""] length] == 13)
-            self.fetchButton.enabled = YES;
-        else
-            self.fetchButton.enabled = NO;
         
         [self.book save];
     } else if (textField == self.pagesField) {
@@ -587,6 +735,17 @@ NSInteger const kNumberOfSections = 5;
 }
 
 #pragma mark - Text View Delegate & Sizing
+
+-(BOOL)textViewShouldEndEditing:(UITextView *)textView {
+    if (_textViewSizeIsUpdating)
+        return NO;
+    return YES;
+}
+
+- (void)textViewDidEndEditing:(UITextView *)textView {
+    self.book.review = self.textView.text;
+    [self.book save];
+}
 
 // http://stackoverflow.com/questions/4015557/uitextview-in-a-uitableviewcell-smooth-auto-resize-shows-and-hides-keyboard-on-ip
 // returns the proper height/size for the UITextView based on the string it contains.
@@ -615,7 +774,7 @@ NSInteger const kNumberOfSections = 5;
     // (2) if they are not equal, then update the height of the UITableViewCell
     if ((self.textView.frame.size.height + 12.0f) != contentView.frame.size.height) {
         [self.tableView beginUpdates];
-        NSLog(@"Content width: %f", contentView.frame.size.width);
+        DEBUG(@"Content view height: %f", contentView.frame.size.height);
         [contentView setFrame:CGRectMake(0,
                                          0,
                                          contentView.frame.size.width,
@@ -633,7 +792,7 @@ NSInteger const kNumberOfSections = 5;
     
     CGSize stringSize = [self textViewSize:textView];
     if (stringSize.height != textView.frame.size.height) {
-        // NSLog(@"New Text View Height: %f", stringSize.height+10);
+        DEBUG(@"New Text View Height: %f", stringSize.height+10);
         [textView setFrame:CGRectMake(textView.frame.origin.x,
                                       textView.frame.origin.y,
                                       textView.frame.size.width,
@@ -647,27 +806,10 @@ NSInteger const kNumberOfSections = 5;
     
 }
 
-- (void)hideTextViewCell:(UITableViewCell *)cell {
-    // This effects removing the content view size for the cell.
-    
-}
-
-// as per: http://stackoverflow.com/questions/3749746/uitextview-in-a-uitableviewcell-smooth-auto-resize
 - (void)textViewDidChange:(UITextView *)textView {
-    
     [self setTextViewSize:textView]; // set proper text view size
-
-}
-
--(BOOL)textViewShouldEndEditing:(UITextView *)textView {
-    if (_textViewSizeIsUpdating)
-        return NO;
-    return YES;
-}
-
-- (void)textViewDidEndEditing:(UITextView *)textView {
-    self.book.review = self.textView.text;
-    [self.book save];
+    UIView * contentView = textView.superview;
+    [self setContentViewSize:contentView];
 }
 
 #pragma mark - Table View Delegate (Text View Sizing)
@@ -704,15 +846,12 @@ NSInteger const kNumberOfSections = 5;
 
 - (NSIndexPath *)translateIndexPath:(NSIndexPath *)indexPath {
     // Translate the given index path from a state-based table view to our global table view's data
-    /*
-        SECTION     GLOBAL      READING     TO READ     READ
-        0           Author      Author      Author      Author
-        1           Book Info   Book Info   Book Info   Book Info
-        2           Status      Status      Status      Status
-        3           Bookmark    Bookmark                Review
-        4           Review
-     
-     */
+    //    SECTION     GLOBAL      READING     TO READ     READ
+    //    0           Author      Author      Author      Author
+    //    1           Book Info   Book Info   Book Info   Book Info
+    //    2           Status      Status      Status      Status
+    //    3           Bookmark    Bookmark                Review
+    //    4           Review
     // In this case we're going from one of the states to global. The only case in which the section
     // index number changes is in the READ case. In the other cases, the numberOfSections method will
     // take care of the rest.
@@ -846,7 +985,5 @@ NSInteger const kNumberOfSections = 5;
     return nil;
     return [super tableView:tableView willSelectRowAtIndexPath:[self translateIndexPath:indexPath]];
 }
-
-
 
 @end

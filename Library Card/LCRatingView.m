@@ -163,14 +163,12 @@
         return;
     
     self.rating = 0;
-    NSLog(@"Touch Location: %f, image views: %@", touchLocation.x, self._imageViews);
 
     for (UIImageView * imageView in self._imageViews) {
         NSInteger index = [self._imageViews indexOfObject:imageView];
 
         if (touchLocation.x > imageView.frame.origin.x) {
             self.rating = index + 1;
-            NSLog(@"Rating: %f", self.rating);
         }
     }
     

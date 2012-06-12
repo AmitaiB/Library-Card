@@ -21,7 +21,9 @@
 
 @property (nonatomic, retain) IBOutlet id delegate;
 @property (nonatomic, retain) IBOutlet ZBarReaderView * readerView;
-
+@property (nonatomic, retain) IBOutlet UIView * overlayView;
+@property (nonatomic, retain) IBOutlet UILabel * tipLabel;
+@property (nonatomic, retain) IBOutlet UIView * helperView;
 @property (nonatomic, retain) id result;
 
 - (IBAction)cancel:(id)sender;

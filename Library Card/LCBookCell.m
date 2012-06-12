@@ -12,12 +12,15 @@
 
 @synthesize titleLabel = _titleLabel;
 @synthesize authorLabel = _authorLabel;
+@synthesize publishedLabel = _publishedLabel;
+
+@synthesize coverImageView = _coverImageView;
 
 - (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
 {
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
     if (self) {
-        // Initialization code
+        self.imageView.contentMode = UIViewContentModeScaleAspectFit;
     }
     return self;
 }

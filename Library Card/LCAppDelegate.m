@@ -10,6 +10,9 @@
 #import "ZBarSDK.h"
 #import "Book.h"
 
+#import "LCBookListTableViewController.h"
+#import "LCBookTableViewController.h"
+
 NSString * const GoogleAPIKey = @"AIzaSyDUhHq98cL-S1rNOGdSjiPXMbdoWMXhjXk";
 NSString * const BookSourceGoogle = @"BookSourceGoogle";
 
@@ -17,7 +20,7 @@ NSString * pathToCoverForISBN(NSString * isbn) {
     NSString * strippedISBN = [[isbn componentsSeparatedByCharactersInSet:
                                 [[NSCharacterSet decimalDigitCharacterSet] invertedSet]] 
                                componentsJoinedByString:@""];
-    NSString * documentsPath = [[((LCAppDelegate *)[UIApplication sharedApplication].delegate)applicationDocumentsDirectory] path];
+    NSString * documentsPath = [((LCAppDelegate *)[UIApplication sharedApplication].delegate)applicationDocumentsDirectory].path;
     NSString * filename = [NSString stringWithFormat:@"%@.jpg", strippedISBN];
     NSString * pathString = [NSString pathWithComponents:
                              [NSArray arrayWithObjects:documentsPath, @"covers", filename, nil]];
@@ -29,11 +32,13 @@ NSString * pathToCoverForISBN(NSString * isbn) {
 
 @synthesize window = _window;
 
-@synthesize managedObjectContext=__managedObjectContext;
+@synthesize managedObjectContext=managedObjectContext__;
 
-@synthesize managedObjectModel=__managedObjectModel;
+@synthesize managedObjectModel=managedObjectModel__;
 
-@synthesize persistentStoreCoordinator=__persistentStoreCoordinator;
+@synthesize persistentStoreCoordinator=persistentStoreCoordinator__;
+
+@synthesize useiCloud = _useiCloud;
 
 
 + (void)initialize {
@@ -46,101 +51,42 @@ NSString * pathToCoverForISBN(NSString * isbn) {
     
 }
 
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
-{
+- (void)applicationDidFinishLaunching:(UIApplication *)application {
     [ZBarReaderView class];
     
     // Make the covers folder exist
-    NSString * documentsPath = [[((LCAppDelegate *)[UIApplication sharedApplication].delegate)applicationDocumentsDirectory] path];
+    NSString * documentsPath = [((LCAppDelegate *)[UIApplication sharedApplication].delegate)applicationDocumentsDirectory].path;
     NSString * coversPath = [NSString pathWithComponents:
                              [NSArray arrayWithObjects:documentsPath, @"covers", nil]];
-
+    
     if (![[NSFileManager defaultManager] fileExistsAtPath:coversPath]) {
         [[NSFileManager defaultManager] createDirectoryAtPath:coversPath 
                                   withIntermediateDirectories:YES 
                                                    attributes:nil 
                                                         error:nil];
     }
-
-    // XXX: Fill in some content
-    NSURL * storeURL = [[self applicationDocumentsDirectory] URLByAppendingPathComponent:@"LibraryCard.sqlite"];
-    if (![[NSFileManager defaultManager] fileExistsAtPath:storeURL.path]) {
-        Book * catch22 = [NSEntityDescription insertNewObjectForEntityForName:@"Book" 
-                                                       inManagedObjectContext:self.managedObjectContext];
-        catch22.title = @"Catch-22";
-        catch22.authors = @"Joseph Heller";
-        catch22.publisher = @"Simon & Schuster";
-        catch22.placeOfPublication = @"New York";
-        catch22.isbn13 = @"978-1451626650";
-        catch22.isbn = @"1451626657";
-        
-        NSDateComponents * components = [[NSDateComponents alloc] init];
-        components.day = 5;
-        components.month = 4;
-        components.year = 2011;
-        catch22.publishedDate = [[[NSCalendar alloc] initWithCalendarIdentifier:NSGregorianCalendar] dateFromComponents:components];
-        [catch22 save];              
-        
-        Book * karamazov = [NSEntityDescription insertNewObjectForEntityForName:@"Book" 
-                                                       inManagedObjectContext:self.managedObjectContext];
-        karamazov.title = @"The Brothers Karamazov";
-        karamazov.authors = @"Fyodor Dostoevsky";
-        karamazov.publisher = @"Farrar, Straus and Giroux";
-        karamazov.placeOfPublication = @"New York";
-        karamazov.isbn13 = @"978-0374528379";
-        karamazov.isbn = @"0374528373";
-        
-        components = [[NSDateComponents alloc] init];
-        components.day = 14;
-        components.month = 6;
-        components.year = 2002;
-        karamazov.publishedDate = [[[NSCalendar alloc] initWithCalendarIdentifier:NSGregorianCalendar] dateFromComponents:components];
-        [karamazov save];
-
-    }
     
-    return YES;
+    UINavigationController * navigationController = (UINavigationController *)self.window.rootViewController;
+    LCBookListTableViewController * controller = (LCBookListTableViewController *)navigationController.topViewController;
+    controller.managedObjectContext = self.managedObjectContext;
+    
+    [self.window addSubview:navigationController.view];
+    [self.window makeKeyAndVisible];
 }
 
-- (void)applicationWillResignActive:(UIApplication *)application
-{
-    /*
-     Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
-     Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
-     */
+- (void)applicationDidEnterBackground:(UIApplication *)application {
+    [self saveContext];
 }
 
-- (void)applicationDidEnterBackground:(UIApplication *)application
-{
-    /*
-     Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later. 
-     If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
-     */
+- (void)applicationWillEnterForeground:(UIApplication *)application {
+    
+    
+    [self saveContext];
 }
 
-- (void)applicationWillEnterForeground:(UIApplication *)application
-{
-    /*
-     Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
-     */
+- (void)applicationWillTerminate:(UIApplication *)application {
+    [self saveContext];
 }
-
-- (void)applicationDidBecomeActive:(UIApplication *)application
-{
-    /*
-     Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
-     */
-}
-
-- (void)applicationWillTerminate:(UIApplication *)application
-{
-    /*
-     Called when the application is about to terminate.
-     Save data if appropriate.
-     See also applicationDidEnterBackground:.
-     */
-}
-
 
 - (void)saveContext {
     NSError *error = nil;
@@ -165,16 +111,26 @@ NSString * pathToCoverForISBN(NSString * isbn) {
  If the context doesn't already exist, it is created and bound to the persistent store coordinator for the application.
  */
 - (NSManagedObjectContext *)managedObjectContext {
-    if (__managedObjectContext != nil) {
-        return __managedObjectContext;
+    if (managedObjectContext__ != nil) {
+        return managedObjectContext__;
     }
     
-    NSPersistentStoreCoordinator *coordinator = [self persistentStoreCoordinator];
+    NSPersistentStoreCoordinator * coordinator = [self persistentStoreCoordinator];
     if (coordinator != nil) {
-        __managedObjectContext = [[NSManagedObjectContext alloc] init];
-        [__managedObjectContext setPersistentStoreCoordinator:coordinator];
+        NSManagedObjectContext * moc = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSMainQueueConcurrencyType];
+        
+        [moc performBlockAndWait:^{
+            [moc setPersistentStoreCoordinator:coordinator];
+            [[NSNotificationCenter defaultCenter]addObserver:self 
+                                                    selector:@selector(mergeChangesFrom_iCloud:) 
+                                                        name:NSPersistentStoreDidImportUbiquitousContentChangesNotification 
+                                                      object:coordinator];
+
+        }];        
+        managedObjectContext__ = moc;
     }
-    return __managedObjectContext;
+    
+    return managedObjectContext__;
 }
 
 /**
@@ -182,12 +138,17 @@ NSString * pathToCoverForISBN(NSString * isbn) {
  If the model doesn't already exist, it is created from the application's model.
  */
 - (NSManagedObjectModel *)managedObjectModel {
-    if (__managedObjectModel != nil) {
-        return __managedObjectModel;
+    if (managedObjectModel__ != nil) {
+        return managedObjectModel__;
     }
+    
+    
     NSURL *modelURL = [[NSBundle mainBundle] URLForResource:@"LibraryCard" withExtension:@"momd"];
-    __managedObjectModel = [[NSManagedObjectModel alloc] initWithContentsOfURL:modelURL];    
-    return __managedObjectModel;
+    managedObjectModel__ = [[NSManagedObjectModel alloc] initWithContentsOfURL:modelURL];    
+    
+    // NSLog(@"Managed Object Model: %@", __managedObjectModel);
+    
+    return managedObjectModel__;
 }
 
 /**
@@ -196,45 +157,154 @@ NSString * pathToCoverForISBN(NSString * isbn) {
  */
 - (NSPersistentStoreCoordinator *)persistentStoreCoordinator
 {
-    if (__persistentStoreCoordinator != nil) {
-        return __persistentStoreCoordinator;
+    if (persistentStoreCoordinator__ != nil) {
+        return persistentStoreCoordinator__;
     }
     
-    NSURL *storeURL = [[self applicationDocumentsDirectory] URLByAppendingPathComponent:@"LibraryCard.sqlite"];
+    // assign the PSC to our app delegate ivar before adding the persistent store in the background
+    // this leverages a behavior in Core Data where you can create NSManagedObjectContext and fetch requests
+    // even if the PSC has no stores.  Fetch requests return empty arrays until the persistent store is added
+    // so it's possible to bring up the UI and then fill in the results later
+    persistentStoreCoordinator__ = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel: [self managedObjectModel]];
     
-    NSError *error = nil;
-    __persistentStoreCoordinator = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:[self managedObjectModel]];
-    if (![__persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:storeURL options:nil error:&error])
-    {
-        /*
-         Replace this implementation with code to handle the error appropriately.
-         
-         abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development. If it is not possible to recover from the error, display an alert panel that instructs the user to quit the application by pressing the Home button.
-         
-         Typical reasons for an error here include:
-         * The persistent store is not accessible;
-         * The schema for the persistent store is incompatible with current managed object model.
-         Check the error message to determine what the actual problem was.
-         
-         
-         If the persistent store is not accessible, there is typically something wrong with the file path. Often, a file URL is pointing into the application's resources directory instead of a writeable directory.
-         
-         If you encounter schema incompatibility errors during development, you can reduce their frequency by:
-         * Simply deleting the existing store:
-         [[NSFileManager defaultManager] removeItemAtURL:storeURL error:nil]
-         
-         * Performing automatic lightweight migration by passing the following dictionary as the options parameter: 
-         [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:YES], NSMigratePersistentStoresAutomaticallyOption, [NSNumber numberWithBool:YES], NSInferMappingModelAutomaticallyOption, nil];
-         
-         Lightweight migration will only work for a limited set of schema changes; consult "Core Data Model Versioning and Data Migration Programming Guide" for details.
-         
-         */
-        NSLog(@"Unresolved error %@, %@", error, [error userInfo]);
-        abort();
-    }    
+    // prep the store path and bundle stuff here since NSBundle isn't totally thread safe
+    NSPersistentStoreCoordinator * psc = persistentStoreCoordinator__;
+	NSString * storePath = [[self applicationDocumentsDirectory] URLByAppendingPathComponent:@"LibraryCard.sqlite"].path;
     
-    return __persistentStoreCoordinator;
+    // do this asynchronously since if this is the first time this particular device is syncing with preexisting
+    // iCloud content it may take a long long time to download
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        NSFileManager *fileManager = [NSFileManager defaultManager];
+        
+        NSURL * storeUrl = [NSURL fileURLWithPath:storePath];
+        // this needs to match the entitlements and provisioning profile
+        NSURL * cloudURL = [fileManager URLForUbiquityContainerIdentifier:nil];
+        
+        NSMutableDictionary * options = [NSMutableDictionary dictionary];
+        [options setObject:[NSNumber numberWithBool:YES] forKey:NSMigratePersistentStoresAutomaticallyOption];
+        [options setObject:[NSNumber numberWithBool:YES] forKey:NSInferMappingModelAutomaticallyOption];
+        
+        if (cloudURL != nil) {
+            NSLog(@"Cloud URL: %@", cloudURL);
+            
+            NSString* coreDataCloudContent = [[cloudURL path] stringByAppendingPathComponent:@"librarycard_v1"];
+            cloudURL = [NSURL fileURLWithPath:coreDataCloudContent];
+            
+            NSLog(@"Cloud URL: %@", cloudURL);
+            
+            //  The API to turn on Core Data iCloud support here.
+            [options setObject:@"com.water-powered.data.librarycard.1" forKey:NSPersistentStoreUbiquitousContentNameKey];
+            [options setObject:cloudURL forKey:NSPersistentStoreUbiquitousContentURLKey];
+        }
+        
+        NSError *error = nil;
+        
+        [psc lock];
+        
+        if (![psc addPersistentStoreWithType:NSSQLiteStoreType 
+                               configuration:nil 
+                                         URL:storeUrl 
+                                     options:options 
+                                       error:&error]) {
+            NSLog(@"Unresolved error %@, %@", error, [error userInfo]);
+            abort();
+        }    
+        
+        [psc unlock];
+        
+        // tell the UI on the main thread we finally added the store and then
+        // post a custom notification to make your views do whatever they need to such as tell their
+        // NSFetchedResultsController to -performFetch again now there is a real store
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSLog(@"asynchronously added persistent store!");
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"RefetchAllDatabaseData" object:self userInfo:nil];
+        });
+    });
+    
+    return persistentStoreCoordinator__;
 }
+
+
+// this takes the NSPersistentStoreDidImportUbiquitousContentChangesNotification
+// and transforms the userInfo dictionary into something that
+// -[NSManagedObjectContext mergeChangesFromContextDidSaveNotification:] can consume
+// then it posts a custom notification to let detail views know they might want to refresh.
+// The main list view doesn't need that custom notification because the NSFetchedResultsController is
+// already listening directly to the NSManagedObjectContext
+- (void)mergeiCloudChanges:(NSDictionary*)noteInfo forContext:(NSManagedObjectContext*)moc {    
+    NSMutableDictionary *localUserInfo = [NSMutableDictionary dictionary];
+    
+    NSSet* allInvalidations = [noteInfo objectForKey:NSInvalidatedAllObjectsKey];
+    NSNotification* refreshNotification = nil;
+    
+    if (nil == allInvalidations) {
+        // (1) we always materialize deletions to ensure delete propagation happens correctly, especially with 
+        // more complex scenarios like merge conflicts and undo.  Without this, future echoes may 
+        // erroreously resurrect objects and cause dangling foreign keys
+        // (2) we always materialize insertions to make new entries visible to the UI
+        NSString* materializeKeys[] = { NSDeletedObjectsKey, NSInsertedObjectsKey };
+        int c = (sizeof(materializeKeys) / sizeof(NSString*));
+        for (int i = 0; i < c; i++) {
+            NSSet* set = [noteInfo objectForKey:materializeKeys[i]];
+            if ([set count] > 0) {
+                NSMutableSet* objectSet = [NSMutableSet set];
+                for (NSManagedObjectID* moid in set) {
+                    [objectSet addObject:[moc objectWithID:moid]];
+                }
+                [localUserInfo setObject:objectSet forKey:materializeKeys[i]];
+            }
+        }
+        
+        // (3) we do not materialize updates to objects we are not currently using
+        // (4) we do not materialize refreshes to objects we are not currently using
+        // (5) we do not materialize invalidations to objects we are not currently using
+        NSString* noMaterializeKeys[] = { NSUpdatedObjectsKey, NSRefreshedObjectsKey, NSInvalidatedObjectsKey };
+        c = (sizeof(noMaterializeKeys) / sizeof(NSString*));
+        for (int i = 0; i < 2; i++) {
+            NSSet* set = [noteInfo objectForKey:noMaterializeKeys[i]];
+            if ([set count] > 0) {
+                NSMutableSet* objectSet = [NSMutableSet set];
+                for (NSManagedObjectID* moid in set) {
+                    NSManagedObject* realObj = [moc objectRegisteredForID:moid];
+                    if (realObj) {
+                        [objectSet addObject:realObj];
+                    }
+                }
+                [localUserInfo setObject:objectSet forKey:noMaterializeKeys[i]];
+            }
+        }
+        
+        NSNotification *fakeSave = [NSNotification notificationWithName:NSManagedObjectContextDidSaveNotification object:self  userInfo:localUserInfo];
+        [moc mergeChangesFromContextDidSaveNotification:fakeSave]; 
+        
+    } else {
+        [localUserInfo setObject:allInvalidations forKey:NSInvalidatedAllObjectsKey];
+    }
+    
+    [moc processPendingChanges];
+    
+    refreshNotification = [NSNotification notificationWithName:@"RefreshAllViews" object:self  userInfo:localUserInfo];
+    
+    [[NSNotificationCenter defaultCenter] postNotification:refreshNotification];
+}
+
+// NSNotifications are posted synchronously on the caller's thread
+// make sure to vector this back to the thread we want, in this case
+// the main thread for our views & controller
+- (void)mergeChangesFrom_iCloud:(NSNotification *)notification {
+    NSDictionary * ui = [notification userInfo];
+	NSManagedObjectContext * moc = [self managedObjectContext];
+    
+    NSLog(@"MERGING CHANGES FROM ICLOUD");
+    NSLog(@"User Info: %@", ui);
+    
+    // this only works if you used NSMainQueueConcurrencyType
+    // otherwise use a dispatch_async back to the main thread yourself
+    [moc performBlock:^{
+        [self mergeiCloudChanges:ui forContext:moc];
+    }];
+}
+
 
 #pragma mark - Application's Documents directory
 
@@ -243,6 +313,11 @@ NSString * pathToCoverForISBN(NSString * isbn) {
  */
 - (NSURL *)applicationDocumentsDirectory {
     return [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
+}
+
+
+- (void)didImportUbiquitousContentChanges:(NSNotification *)sender {
+    NSLog(@"Did Import Ubiquitous Content Changes: %@", sender.userInfo);
 }
 
 @end

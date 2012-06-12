@@ -6,13 +6,14 @@
 //  Copyright (c) 2011 __MyCompanyName__. All rights reserved.
 //
 
-#import "LCAppDelegate.h"
 #import "LCBookListTableViewController.h"
 #import "LCBookTableViewController.h"
 #import "LCBookCell.h"
 
 @interface LCBookListTableViewController () <NSFetchedResultsControllerDelegate>
 @property (strong, nonatomic) NSFetchedResultsController * fetchedResultsController;
+- (void)reloadFetchedResults:(NSNotification*)notification;
+
 @end
 
 @interface LCBookListTableViewController (private)
@@ -24,6 +25,9 @@
 
 
 @implementation LCBookListTableViewController
+
+@synthesize detailViewController = _detailViewController;
+@synthesize managedObjectContext = _managedObjectContext;
 
 @synthesize fetchedResultsController = _fetchedResultsController;
 
@@ -55,17 +59,52 @@
 
 #pragma mark - View lifecycle
 
+- (void)awakeFromNib {
+    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
+        self.clearsSelectionOnViewWillAppear = NO;
+        self.contentSizeForViewInPopover = CGSizeMake(320.0, 600.0);
+    }
+    [super awakeFromNib];
+}
+
 - (void)setToolbarItems:(NSArray *)toolbarItems animated:(BOOL)animated {
 }
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+
     [self.statusBarButtonItem setCustomView:self.statusControl]; 
-        
     self.statusControl.selectedSegmentIndex = [[NSUserDefaults standardUserDefaults] integerForKey:@"BookListTabSelection"];
+    
+    // Do any additional setup after loading the view, typically from a nib.
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) 
+        self.detailViewController = (LCBookTableViewController *)[[self.splitViewController.viewControllers lastObject] topViewController];
+
+    /*
+    if ((UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) && ([self.tableView indexPathForSelectedRow] == nil)) {
+        NSIndexPath * initialIndexPath = [NSIndexPath indexPathForRow:0 inSection:0];
+        Book * book = [self.fetchedResultsController objectAtIndexPath:initialIndexPath];
+
+        if (self.detailViewController.book == nil)
+            self.detailViewController.book = book;
+
+        [self.tableView selectRowAtIndexPath:initialIndexPath
+                                    animated:NO 
+                              scrollPosition:UITableViewScrollPositionNone];
+    }
+    */
+    
+    [self reloadFetchedResults:nil];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self 
+                                             selector:@selector(reloadFetchedResults:) 
+                                                 name:@"RefetchAllDatabaseData" 
+                                               object:[[UIApplication sharedApplication] delegate]];
 }
 
 - (void)viewDidUnload {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+
     [super viewDidUnload];
 }
 
@@ -73,7 +112,8 @@
     [self.navigationController setToolbarHidden:NO animated:YES];
     [super viewWillAppear:animated];
     
-    [self.tableView reloadData];
+    // [self.tableView reloadData];
+
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -96,7 +136,9 @@
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
-    // Return YES for supported orientations
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
+        return YES;
+    
     return (interfaceOrientation == UIInterfaceOrientationPortrait);
 }
 
@@ -129,6 +171,12 @@
     }
     
     [self.tableView reloadData];
+    
+    // Select the current book
+    NSIndexPath * selectedIndexPath = [self.fetchedResultsController indexPathForObject:self.detailViewController.book];
+    [self.tableView selectRowAtIndexPath:selectedIndexPath 
+                                animated:YES scrollPosition:UITableViewScrollPositionMiddle];
+    
 }
 
 #pragma mark - Segue
@@ -150,18 +198,52 @@
     }
 }
 
+- (IBAction)addBook:(id)sender {
+    // phone devices should just use the segue, since they're not using a split view controller.
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone)
+        return;
+    
+    // De-select the existing book
+    Book * selectedBook = [self.fetchedResultsController objectAtIndexPath:[self.tableView indexPathForSelectedRow]];
+    if (selectedBook == self.detailViewController.book)
+        [self.tableView deselectRowAtIndexPath:[self.tableView indexPathForSelectedRow] animated:YES];
+    
+    self.detailViewController.book = nil;
+    // [self.detailViewController performSegueWithIdentifier:@"scanBarcode" sender:self];
+}
+
 #pragma mark - Fetched Results Controller 
+
+// because the app delegate now loads the NSPersistentStore into the NSPersistentStoreCoordinator asynchronously
+// we will see the NSManagedObjectContext set up before any persistent stores are registered
+// we will need to fetch again after the persistent store is loaded
+- (void)reloadFetchedResults:(NSNotification*)notification {
+    NSError * error = nil;
+
+    DEBUG(@"Reloading Fetched Results");
+
+	if (![[self fetchedResultsController] performFetch:&error]) {
+		NSLog(@"Unresolved error %@, %@", error, [error userInfo]);
+		abort();
+	}		
+    
+    if (notification) {
+        [self.tableView reloadData];
+    }
+
+}
+
 
 - (NSFetchedResultsController *)fetchedResultsController {
     if (_fetchedResultsController != nil) {
         return _fetchedResultsController;
     }
 
-    NSManagedObjectContext * managedObjectContext = ((LCAppDelegate *)[UIApplication sharedApplication].delegate).managedObjectContext;
     NSFetchRequest * fetchRequest = [[NSFetchRequest alloc] init];
-    
+        
     // Set the entity
-    fetchRequest.entity = [NSEntityDescription entityForName:@"Book" inManagedObjectContext:managedObjectContext];
+    NSEntityDescription * entity = [NSEntityDescription entityForName:@"Book" inManagedObjectContext:self.managedObjectContext];
+    fetchRequest.entity = entity;
     
     // Set the sort key
     NSSortDescriptor * sortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"title" ascending:YES];
@@ -172,7 +254,7 @@
     
     NSFetchedResultsController * aFetchedResultsController = 
         [[NSFetchedResultsController alloc] initWithFetchRequest:fetchRequest 
-                                            managedObjectContext:managedObjectContext 
+                                            managedObjectContext:self.managedObjectContext 
                                               sectionNameKeyPath:nil 
                                                        cacheName:self.cacheName];
     aFetchedResultsController.delegate = self;
@@ -239,6 +321,8 @@
     if (self.searching)
         [self.searchDisplayController.searchResultsTableView beginUpdates];
 
+    [self.tableView beginUpdates];
+
 }
 
 - (void)controllerDidChangeContent:(NSFetchedResultsController *)controller {
@@ -255,7 +339,6 @@
 
 - (void)updateCell:(LCBookCell *)cell atIndexPath:(NSIndexPath *)indexPath {
     
-    NSLog(@"Updating Cell");
     Book * book = [self.fetchedResultsController objectAtIndexPath:indexPath];
     
     cell.titleLabel.text = book.title;
@@ -263,9 +346,9 @@
     
     NSString * coverPath = pathToCoverForISBN(book.isbn13);
     if ([[NSFileManager defaultManager] fileExistsAtPath:coverPath])
-        cell.imageView.image = [UIImage imageWithContentsOfFile:coverPath];
+        cell.coverImageView.image = [UIImage imageWithContentsOfFile:coverPath];
     else
-        cell.imageView.image = [UIImage imageNamed:@"cover.png"];
+        cell.coverImageView.image = [UIImage imageNamed:@"cover.png"];
     
 }
 
@@ -282,14 +365,14 @@
     static NSString * CellIdentifier = @"BookListCell";
     
     UITableViewCell * cell;
-    
+    Book * book = [self.fetchedResultsController objectAtIndexPath:indexPath];
+
     if (tableView == self.searchDisplayController.searchResultsTableView) {
         cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
         if (cell == nil) {
             cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier];
         }
         
-        Book * book = [self.fetchedResultsController objectAtIndexPath:indexPath];
         cell.textLabel.text = book.title;
         cell.detailTextLabel.text = book.authors;
     }
@@ -300,7 +383,10 @@
         }
         [self updateCell:cell atIndexPath:indexPath];
     }
-
+    
+    if (book.objectID == self.detailViewController.book.objectID)
+        cell.selected = YES;
+    
     return cell;
 }
 
@@ -314,9 +400,16 @@
 - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
 {
     if (editingStyle == UITableViewCellEditingStyleDelete) {
+        Book * book = [self.fetchedResultsController objectAtIndexPath:indexPath];
+        if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
+            if (self.detailViewController.book == book)
+                self.detailViewController.book = nil;
+        }
+
+        
         // Delete the managed object for the given index path
         NSManagedObjectContext *context = [self.fetchedResultsController managedObjectContext];
-        [context deleteObject:[self.fetchedResultsController objectAtIndexPath:indexPath]];
+        [context deleteObject:book];
         
         // Save the context.
         NSError *error;
@@ -335,26 +428,20 @@
 
 #pragma mark - Table view delegate
 
-/*
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    // Navigation logic may go here. Create and push another view controller.
-     <#DetailViewController#> *detailViewController = [[<#DetailViewController#> alloc] initWithNibName:@"<#Nib name#>" bundle:nil];
-     // ...
-     // Pass the selected object to the new view controller.
-     [self.navigationController pushViewController:detailViewController animated:YES];
+    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
+        self.detailViewController.book = [self.fetchedResultsController objectAtIndexPath:[self.tableView indexPathForSelectedRow]];
+    }
 }
-*/
 
 #pragma mark - Search Display Controller
 
 - (void)filterContentForSearchText:(NSString*)searchText scope:(NSString*)scope {
 
     NSPredicate * filterPredicate;
-    NSLog(@"Scope: %@, searchText: %@", scope, searchText);
     if ([scope isEqualToString:@"Author"]) {
         filterPredicate = [NSPredicate predicateWithFormat:@"authors contains[cd] %@", searchText];
-        NSLog(@"authors contains[cd] %@", searchText);
     } else
         filterPredicate = [NSPredicate predicateWithFormat:@"title beginswith[cd] %@", searchText];
     

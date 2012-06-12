@@ -16,6 +16,8 @@
 @property (nonatomic, retain, readonly) NSManagedObjectModel *managedObjectModel;
 @property (nonatomic, retain, readonly) NSPersistentStoreCoordinator *persistentStoreCoordinator;
 
+@property (nonatomic) BOOL useiCloud;
+
 - (void)saveContext;
 - (NSURL *)applicationDocumentsDirectory;
 

@@ -32,6 +32,9 @@
 @dynamic review;
 @dynamic shelves;
 
+@dynamic thumbnailImage;
+@dynamic image;
+
 @dynamic formattedDateRead;
 @dynamic formattedPublishedDate;
 
@@ -58,7 +61,6 @@
     self.isbn = [bookInfo objectForKey:@"isbn"];
     self.isbn13 = [bookInfo objectForKey:@"isbn13"];
     self.publishedDate = [bookInfo objectForKey:@"publishedDate"];
-    
 }
 
 - (NSString *)formattedDateRead {
@@ -90,12 +92,17 @@
         return;
     }
     
+    NSManagedObjectContext * moc = self.managedObjectContext;
     NSError * error;
-    if (![[self managedObjectContext] save:&error]) {
-        DEBUG(@"Error: %@", error);
-        DEBUG(@"Error Dict: %@", [error userInfo]);
-        Alert(nil, @"There was an error saving the item", @"OK", nil);
-        return;        
+    DEBUG(@"PSC: %@", [[moc persistentStoreCoordinator] persistentStores]);
+    if ([[[moc persistentStoreCoordinator] persistentStores] count] > 0) {
+        DEBUG(@"More than one persistent store");
+        if (![moc save:&error]) {
+            DEBUG(@"Error: %@", error);
+            DEBUG(@"Error Dict: %@", [error userInfo]);
+            Alert(nil, @"There was an error saving the item", @"OK", nil);
+            return;        
+        }
     }
     
     DEBUG(@"Item saved.");
@@ -103,3 +110,27 @@
 
 @end
 
+@implementation ImageToDataTransformer
+
++ (BOOL)allowsReverseTransformation {
+	return YES;
+}
+
++ (Class)transformedValueClass {
+	return [NSData class];
+}
+
+- (id)transformedValue:(id)value {
+    // for our smaller views this uses much less data and makes for faster syncing
+    // multi-media asset quality should account for sync performance and storage
+	NSData *data = UIImageJPEGRepresentation(value, 0.1);
+	return data;
+}
+
+
+- (id)reverseTransformedValue:(id)value {
+	UIImage * uiImage = [[UIImage alloc] initWithData:value];
+	return uiImage;
+}
+
+@end

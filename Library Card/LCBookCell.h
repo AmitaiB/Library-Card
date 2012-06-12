@@ -12,5 +12,6 @@
 
 @property (nonatomic, retain) IBOutlet UILabel * titleLabel;
 @property (nonatomic, retain) IBOutlet UILabel * authorLabel;
-
+@property (nonatomic, retain) IBOutlet UILabel * publishedLabel;
+@property (nonatomic, retain) IBOutlet UIImageView * coverImageView;
 @end

@@ -12,7 +12,7 @@
 #import "LCRatingView.h"
 #import "LCCoverView.h"
 
-@interface LCBookTableViewController : UITableViewController <LCBarcodeScannerDelegate, UITextViewDelegate>
+@interface LCBookTableViewController : UITableViewController <LCBarcodeScannerDelegate, UITextViewDelegate, UISplitViewControllerDelegate>
 
 @property (nonatomic, retain) Book * book;
 
@@ -20,6 +20,8 @@
 @property (nonatomic, retain) IBOutlet UIBarButtonItem * helpButton;
 @property (nonatomic, retain) IBOutlet UIBarButtonItem * tweetButton;
 @property (nonatomic, retain) IBOutlet UIBarButtonItem * fetchButton;
+@property (nonatomic, retain) IBOutlet UIBarButtonItem * addButton;
+@property (nonatomic, retain) IBOutlet UIBarButtonItem * deleteButton;
 
 @property (nonatomic, retain) IBOutlet LCCoverView * coverView;
 
@@ -43,8 +45,11 @@
 @property (nonatomic, retain) IBOutlet LCRatingView * ratingView;
 @property (nonatomic, retain) IBOutlet UITextView * textView;
 
+@property (nonatomic, retain) UITapGestureRecognizer * tapBehindRecognizer;
+
+- (IBAction)addBook:(id)sender;
 - (IBAction)statusControlChanged:(id)sender;
 - (IBAction)tweet:(id)sender;
-- (IBAction)fetchInfo:(id)sender;
+- (IBAction)find:(id)sender;
 
 @end

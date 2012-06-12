@@ -43,6 +43,10 @@ typedef enum {
 @property (nonatomic, readonly) NSString * formattedPublishedDate;
 @property (nonatomic, readonly) NSString * formattedDateRead;
 
+@property (nonatomic, retain) UIImage *thumbnailImage;
+
+@property (nonatomic, retain) NSManagedObject *image;
+
 + (Book *)bookFromInfo:(NSDictionary *)bookInfo;
 - (void)setAttributesFromDict:(NSDictionary *)bookInfo;
 - (void)save;
@@ -57,3 +61,8 @@ typedef enum {
 - (void)removeShelves:(NSSet *)values;
 
 @end
+
+@interface ImageToDataTransformer : NSValueTransformer {
+}
+@end
+
