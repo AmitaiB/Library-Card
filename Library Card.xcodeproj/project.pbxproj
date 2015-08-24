@@ -893,7 +893,7 @@
 			name = "Library CardTests";
 			productName = "Library CardTests";
 			productReference = BE876C2F13F6874D006C7ECD /* Library CardTests.octest */;
-			productType = "com.apple.product-type.bundle";
+			productType = "com.apple.product-type.bundle.ocunit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -902,6 +902,11 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 0420;
+				TargetAttributes = {
+					BE876C0113F6874C006C7ECD = {
+						DevelopmentTeam = 8VC65F749H;
+					};
+				};
 			};
 			buildConfigurationList = BE876BFC13F6874B006C7ECD /* Build configuration list for PBXProject "Library Card" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -1160,6 +1165,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = "Library Card/Library Card.entitlements";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Library Card/Library Card-Prefix.pch";
 				HEADER_SEARCH_PATHS = "${SDK_DIR}/usr/include/libxml2";
@@ -1180,6 +1186,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = "Library Card/Library Card.entitlements";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Library Card/Library Card-Prefix.pch";
 				HEADER_SEARCH_PATHS = "${SDK_DIR}/usr/include/libxml2";

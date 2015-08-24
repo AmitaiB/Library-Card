@@ -50,23 +50,23 @@
 - (void)setAttributesFromDict:(NSDictionary *)bookInfo {
     
     // Set Book attributes
-    self.googleId = [bookInfo objectForKey:@"googleId"];
-    self.title = [bookInfo objectForKey:@"title"];
-    self.authors = [bookInfo objectForKey:@"authors"];
-    self.publisher = [bookInfo objectForKey:@"publisher"];
-    self.pages = [bookInfo objectForKey:@"pages"];
-    self.language = [bookInfo objectForKey:@"language"];
-    self.thumbnailUrl = [bookInfo objectForKey:@"thumbnailUrl"]; 
-    self.categories = [bookInfo objectForKey:@"categories"];
-    self.isbn = [bookInfo objectForKey:@"isbn"];
-    self.isbn13 = [bookInfo objectForKey:@"isbn13"];
+    self.googleId      = [bookInfo objectForKey:@"googleId"];
+    self.title         = [bookInfo objectForKey:@"title"];
+    self.authors       = [bookInfo objectForKey:@"authors"];
+    self.publisher     = [bookInfo objectForKey:@"publisher"];
+    self.pages         = [bookInfo objectForKey:@"pages"];
+    self.language      = [bookInfo objectForKey:@"language"];
+    self.thumbnailUrl  = [bookInfo objectForKey:@"thumbnailUrl"];
+    self.categories    = [bookInfo objectForKey:@"categories"];
+    self.isbn          = [bookInfo objectForKey:@"isbn"];
+    self.isbn13        = [bookInfo objectForKey:@"isbn13"];
     self.publishedDate = [bookInfo objectForKey:@"publishedDate"];
 }
 
 - (NSString *)formattedDateRead {
-    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    dateFormatter.dateStyle = NSDateFormatterMediumStyle;
-    dateFormatter.timeStyle = NSDateFormatterNoStyle;
+    NSDateFormatter *dateFormatter = [NSDateFormatter new];
+    dateFormatter.dateStyle        = NSDateFormatterMediumStyle;
+    dateFormatter.timeStyle        = NSDateFormatterNoStyle;
 
     NSString * formattedDateString = [dateFormatter stringFromDate:self.dateRead];
     

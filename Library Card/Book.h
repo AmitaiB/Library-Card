@@ -21,10 +21,10 @@ typedef enum {
 @interface Book : NSManagedObject
 
 @property (nonatomic, retain) NSString * authors;
-@property (nonatomic, retain) NSDate * dateRead;
+@property (nonatomic, retain) NSDate   * dateRead;
 @property (nonatomic, retain) NSString * isbn;
 @property (nonatomic, retain) NSString * isbn13;
-@property (nonatomic, retain) NSDate * publishedDate;
+@property (nonatomic, retain) NSDate   * publishedDate;
 @property (nonatomic, retain) NSString * placeOfPublication;
 @property (nonatomic, retain) NSString * publisher;
 @property (nonatomic, retain) NSNumber * status;
@@ -38,7 +38,7 @@ typedef enum {
 @property (nonatomic, retain) NSNumber * bookmark;
 @property (nonatomic, retain) NSNumber * isEbook;
 @property (nonatomic, retain) NSString * review;
-@property (nonatomic, retain) NSSet * shelves;
+@property (nonatomic, retain) NSSet    * shelves;
 
 @property (nonatomic, readonly) NSString * formattedPublishedDate;
 @property (nonatomic, readonly) NSString * formattedDateRead;
@@ -47,6 +47,7 @@ typedef enum {
 
 @property (nonatomic, retain) NSManagedObject *image;
 
++ (NSString *)formattedDateFromDate:(NSDate*)date;
 + (Book *)bookFromInfo:(NSDictionary *)bookInfo;
 - (void)setAttributesFromDict:(NSDictionary *)bookInfo;
 - (void)save;
@@ -55,10 +56,10 @@ typedef enum {
 
 @interface Book (CoreDataGeneratedAccessors)
 
-- (void)addShelvesObject:(Shelf *)value;
-- (void)removeShelvesObject:(Shelf *)value;
-- (void)addShelves:(NSSet *)values;
-- (void)removeShelves:(NSSet *)values;
+- (void)addShelvesObject:(Shelf    * )value;
+- (void)removeShelvesObject:(Shelf * )value;
+- (void)addShelves:(NSSet          * )values;
+- (void)removeShelves:(NSSet       * )values;
 
 @end
 
